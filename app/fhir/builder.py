@@ -1,6 +1,9 @@
+import base64
+import copy
 import json
 import uuid
 from datetime import date, datetime, timezone
+from pathlib import Path
 
 from fhir.resources.R4B.bundle import Bundle
 
@@ -10,12 +13,20 @@ from app.fhir.codes import (
     DOC_TYPE_LOINC,
     GENERIC_SYSTEM,
     INTERPRETATION,
+    LAB_CATEGORY,
+    LOCAL_ORGANIZATION_SYSTEM,
+    LOCAL_PRACTITIONER_SYSTEM,
     LOINC,
+    NDHM_ID_TYPE,
     NRCES,
+    REGISTRATION_SYSTEM,
+    SNOMED,
     UCUM,
     UCUM_CODES,
     UCUM_TIME,
+    V2_0203,
 )
+from app.normalize.labs import by_loinc
 from app.schemas import DischargeSummary, LabReport, LabResult, MedicationItem, Prescription, document_date
 
 NS = uuid.UUID("6b1f3c0e-7f2a-4d55-9a57-0c7f4b2b9e11")
@@ -31,6 +42,32 @@ def _rid(full_url: str) -> str:
 
 def _meta(profile: str) -> dict:
     return {"profile": [f"{NRCES}/{profile}"]}
+
+
+def _identifier(type_system: str, type_code: str, type_display: str, system: str, value: str) -> dict:
+    return {"type": {"coding": [{"system": type_system, "code": type_code, "display": type_display}], "text": type_display}, "system": system, "value": value}
+
+
+def _local_identifier(system: str, full_url: str) -> dict:
+    return _identifier(NDHM_ID_TYPE, "OIN", "Other identifier", system, _rid(full_url))
+
+
+def _conclusion(results: list[LabResult]) -> str:
+    flagged, unranged = [], 0
+    for r in results:
+        n = r.normalized
+        if n and n.flag in INTERPRETATION and n.flag != "normal":
+            flagged.append(f"{n.canonical_name or r.test_name.value} ({n.flag})")
+        elif not n or n.flag not in INTERPRETATION:
+            unranged += 1
+    lead = "Software-computed flags, not a clinical interpretation. "
+    if flagged:
+        text = lead + "Outside the reference range: " + ", ".join(flagged) + "."
+    else:
+        text = lead + "No result is flagged outside its reference range."
+    if unranged:
+        text += " Some results have no reference range to compare against."
+    return text
 
 
 def _iso(d) -> str | None:
@@ -87,16 +124,20 @@ class BundleBuilder:
     def practitioner(self, name: str | None, registration: str | None = None) -> str | None:
         if not name:
             return None
-        res = {"resourceType": "Practitioner", "meta": _meta("Practitioner"), "name": [{"text": name}]}
+        full_url = urn("practitioner", name.lower().strip(), registration or "")
         if registration:
-            res["identifier"] = [{"type": {"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0203", "code": "MD"}], "text": "Medical registration"},
-                                  "system": "https://doctor.ndhm.gov.in", "value": registration}]
-        return self.add(res, urn("practitioner", name.lower().strip(), registration or ""))
+            identifier = _identifier(V2_0203, "MD", "Medical License number", REGISTRATION_SYSTEM, registration)
+        else:
+            identifier = _local_identifier(LOCAL_PRACTITIONER_SYSTEM, full_url)
+        res = {"resourceType": "Practitioner", "meta": _meta("Practitioner"), "identifier": [identifier], "name": [{"text": name}]}
+        return self.add(res, full_url)
 
     def organization(self, name: str | None) -> str | None:
         if not name:
             return None
-        return self.add({"resourceType": "Organization", "meta": _meta("Organization"), "name": name}, urn("organization", name.lower().strip()))
+        full_url = urn("organization", name.lower().strip())
+        res = {"resourceType": "Organization", "meta": _meta("Organization"), "identifier": [_local_identifier(LOCAL_ORGANIZATION_SYSTEM, full_url)], "name": name}
+        return self.add(res, full_url)
 
     def encounter(self, klass: str, start, end, practitioner: str | None, org: str | None, pat: str) -> str:
         codes = {"AMB": "ambulatory", "IMP": "inpatient encounter"}
@@ -116,6 +157,12 @@ class BundleBuilder:
             res["serviceProvider"] = self.ref(org)
         return self.add(res, urn("encounter", self.doc_id))
 
+    def link_diagnoses(self, enc: str | None, conditions: list[str]) -> None:
+        if not enc or not conditions:
+            return
+        resource = next(e["resource"] for e in self.entries if e["fullUrl"] == enc)
+        resource["diagnosis"] = [{"condition": self.ref(ref)} for ref in conditions]
+
     def observation(self, r: LabResult, i: int, pat: str, effective, performer: list[str]) -> str | None:
         n = r.normalized
         name = r.test_name.value
@@ -123,7 +170,8 @@ class BundleBuilder:
             return None
         code = {"text": name}
         if n and n.loinc:
-            code["coding"] = [{"system": LOINC, "code": n.loinc, "display": n.canonical_name}]
+            ref = by_loinc(n.loinc)
+            code["coding"] = [{"system": LOINC, "code": n.loinc, "display": ref.loinc_display if ref and ref.loinc_display else n.canonical_name}]
         res = {
             "resourceType": "Observation",
             "meta": _meta("Observation"),
@@ -166,7 +214,7 @@ class BundleBuilder:
             res["interpretation"] = [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v3-ObservationInterpretation", "code": code_[0], "display": code_[1]}], "text": n.flag}]
         return self.add(res, urn("observation", self.doc_id, i))
 
-    def diagnostic_report(self, results: list[LabResult], pat: str, effective, issued, performers: list[str], enc: str | None) -> str | None:
+    def diagnostic_report(self, results: list[LabResult], pat: str, effective, issued, performers: list[str], enc: str | None, interpreter: str | None) -> str | None:
         obs = [o for i, r in enumerate(results) if (o := self.observation(r, i, pat, effective, performers))]
         if not obs:
             return None
@@ -174,11 +222,14 @@ class BundleBuilder:
             "resourceType": "DiagnosticReport",
             "meta": _meta("DiagnosticReportLab"),
             "status": "final",
-            "category": [{"coding": [{"system": "http://terminology.hl7.org/CodeSystem/v2-0074", "code": "LAB", "display": "Laboratory"}]}],
+            "category": [{"coding": [{"system": SNOMED, "code": LAB_CATEGORY[0], "display": LAB_CATEGORY[1]}], "text": "Laboratory"}],
             "code": {"coding": [{"system": LOINC, "code": "11502-2", "display": "Laboratory report"}], "text": "Laboratory report"},
             "subject": self.ref(pat),
             "result": [self.ref(o) for o in obs],
+            "conclusion": _conclusion(results),
         }
+        if interpreter:
+            res["resultsInterpreter"] = [self.ref(interpreter)]
         if effective:
             res["effectiveDateTime"] = _iso(effective)
         if issued:
@@ -296,16 +347,15 @@ class BundleBuilder:
             path = self.practitioner(ex.pathologist.value)
             self.practitioner(ex.referring_doctor.value)
             performers = [p for p in (org, path) if p]
-            self.diagnostic_report(ex.results, pat, ex.collected_on.value or ex.reported_on.value, ex.reported_on.value, performers, None)
+            self.diagnostic_report(ex.results, pat, ex.collected_on.value or ex.reported_on.value, ex.reported_on.value, performers, None, path or org)
             authors = performers
         elif isinstance(ex, Prescription):
             org = self.organization(ex.facility.value)
             doc = self.practitioner(ex.prescriber.value, ex.prescriber_registration.value)
             enc = self.encounter("AMB", ex.date.value, ex.date.value, doc, org, pat)
-            for i, c in enumerate(ex.complaints):
-                self.condition(c.value, i, pat, enc, ex.date.value, "complaint")
-            for i, c in enumerate(ex.diagnoses):
-                self.condition(c.value, i, pat, enc, ex.date.value, "diagnosis")
+            linked = [r for i, c in enumerate(ex.complaints) if (r := self.condition(c.value, i, pat, enc, ex.date.value, "complaint"))]
+            linked += [r for i, c in enumerate(ex.diagnoses) if (r := self.condition(c.value, i, pat, enc, ex.date.value, "diagnosis"))]
+            self.link_diagnoses(enc, linked)
             for i, m in enumerate(ex.medications):
                 self.medication_request(m, i, pat, doc, ex.date.value, enc)
             authors = [a for a in (doc, org) if a]
@@ -314,11 +364,10 @@ class BundleBuilder:
             org = self.organization(ex.facility.value)
             doc = self.practitioner(ex.attending_doctor.value)
             enc = self.encounter("IMP", ex.admission_date.value, ex.discharge_date.value, doc, org, pat)
-            for i, c in enumerate(ex.presenting_complaints):
-                self.condition(c.value, i, pat, enc, ex.admission_date.value, "complaint")
-            for i, c in enumerate(ex.diagnoses):
-                self.condition(c.value, i, pat, enc, ex.discharge_date.value, "diagnosis")
-            self.diagnostic_report(ex.investigations, pat, ex.admission_date.value, None, [o for o in (org,) if o], enc)
+            linked = [r for i, c in enumerate(ex.presenting_complaints) if (r := self.condition(c.value, i, pat, enc, ex.admission_date.value, "complaint"))]
+            linked += [r for i, c in enumerate(ex.diagnoses) if (r := self.condition(c.value, i, pat, enc, ex.discharge_date.value, "diagnosis"))]
+            self.link_diagnoses(enc, linked)
+            self.diagnostic_report(ex.investigations, pat, ex.admission_date.value, None, [o for o in (org,) if o], enc, org or doc)
             for i, m in enumerate(ex.discharge_medications):
                 self.medication_request(m, i, pat, doc, ex.discharge_date.value, enc)
             authors = [a for a in (doc, org) if a]
@@ -327,7 +376,7 @@ class BundleBuilder:
         bundle = {
             "resourceType": "Bundle",
             "id": _rid(urn("bundle", self.doc_id)),
-            "meta": {**_meta("DocumentBundle"), "lastUpdated": datetime.now(timezone.utc).isoformat(timespec="seconds")},
+            "meta": {"versionId": "1", "lastUpdated": datetime.now(timezone.utc).isoformat(timespec="seconds")},
             "identifier": {"system": "urn:bytexl:document", "value": self.doc_id},
             "type": "collection",
             "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),
@@ -360,6 +409,22 @@ def validate_bundle(bundle: dict) -> dict:
     return json.loads(parsed.json())
 
 
+def embed_source(bundle: dict, document: dict) -> dict:
+    path = document.get("path")
+    if not path or not Path(path).exists():
+        return bundle
+    data = base64.b64encode(Path(path).read_bytes()).decode()
+    out = copy.deepcopy(bundle)
+    for e in out.get("entry", []):
+        r = e["resource"]
+        if r["resourceType"] == "DocumentReference" and r.get("content"):
+            attachment = r["content"][0].setdefault("attachment", {})
+            if attachment.get("url") == f"/documents/{document['_id']}/file":
+                attachment["data"] = data
+                attachment.setdefault("contentType", document.get("content_type"))
+    return out
+
+
 def build_bundle(document: dict, patient: dict, extraction) -> dict:
     return BundleBuilder(document, patient, extraction).build()
 
@@ -371,7 +436,7 @@ def merge_bundles(bundles: list[dict], patient_id: str) -> dict:
     bundle = {
         "resourceType": "Bundle",
         "id": _rid(urn("export", patient_id)),
-        "meta": _meta("DocumentBundle"),
+        "meta": {"versionId": "1"},
         "identifier": {"system": "urn:bytexl:patient-export", "value": patient_id},
         "type": "collection",
         "timestamp": datetime.now(timezone.utc).isoformat(timespec="seconds"),

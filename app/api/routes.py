@@ -7,7 +7,7 @@ from pydantic import BaseModel, Field
 
 from app import pipeline, records
 from app.fhir.abdm import to_document_bundle
-from app.fhir.builder import merge_bundles
+from app.fhir.builder import embed_source, merge_bundles
 from app.ingest.ingest import UnsupportedFile, sniff_type
 from app.patients import create_patient, link_abha
 from app.store import get_repository
@@ -154,9 +154,10 @@ def get_document_fhir(document_id: str, profile: Literal["collection", "abdm"] =
     b = get_repository().get("bundles", f"bun_{document_id}")
     if b is None:
         raise HTTPException(409, "The FHIR record is not ready yet.")
+    bundle = embed_source(b["bundle"], d)
     if profile == "abdm":
-        return to_document_bundle(b["bundle"], d["document_type"], d.get("filename"))
-    return b["bundle"]
+        return to_document_bundle(bundle, d["document_type"], d.get("filename"))
+    return bundle
 
 
 @router.get("/documents/{document_id}/summary")
@@ -231,11 +232,14 @@ def export_patient(patient_id: str, profile: Literal["collection", "abdm"] = "co
     _patient(patient_id)
     bundles = get_repository().find("bundles", {"patient_id": patient_id})
     bundles.sort(key=lambda b: b.get("created_at", ""))
+    repo = get_repository()
+    sources = {b["document_id"]: repo.get("documents", b["document_id"]) or {} for b in bundles}
+    embedded = [(b, embed_source(b["bundle"], sources[b["document_id"]])) for b in bundles]
     if profile == "abdm":
-        docs = {b["document_id"]: b for b in bundles}
+        docs = {b["document_id"]: (b, e) for b, e in embedded}
         return {
             "resourceType": "Bundle",
             "type": "collection",
-            "entry": [{"resource": to_document_bundle(b["bundle"], b["document_type"])} for b in docs.values()],
+            "entry": [{"resource": to_document_bundle(e, b["document_type"])} for b, e in docs.values()],
         }
-    return merge_bundles([b["bundle"] for b in bundles], patient_id)
+    return merge_bundles([e for _, e in embedded], patient_id)

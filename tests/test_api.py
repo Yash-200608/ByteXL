@@ -95,6 +95,31 @@ def test_full_flow_lab_and_prescription(api, patient):
 
     abdm = api.get(f"/documents/{rx['id']}/fhir?profile=abdm").json()
     assert abdm["type"] == "document" and abdm["entry"][0]["resource"]["resourceType"] == "Composition"
+    assert abdm["meta"]["versionId"] == "1" and abdm["meta"]["profile"][0].endswith("/DocumentBundle")
+    sections = abdm["entry"][0]["resource"]["section"]
+    assert len(sections) == 1 and sections[0]["code"]["coding"][0]["code"] == "440545006"
+    assert {r["type"] for r in sections[0]["entry"]} == {"MedicationRequest", "Binary"}
+    binary = next(e["resource"] for e in abdm["entry"] if e["resource"]["resourceType"] == "Binary")
+    assert binary["data"] and binary["contentType"] == "application/pdf"
+    prac = next(e["resource"] for e in abdm["entry"] if e["resource"]["resourceType"] == "Practitioner")
+    assert prac["identifier"][0]["type"]["coding"][0]["code"] == "MD" and prac["identifier"][0]["value"] == "MMC 2009/03/5678"
+
+    assert "profile" not in fhir.get("meta", {}) and fhir["meta"]["versionId"] == "1"
+    dr = next(e["resource"] for e in fhir["entry"] if e["resource"]["resourceType"] == "DiagnosticReport")
+    assert dr["resultsInterpreter"] and dr["conclusion"].startswith("Software-computed flags, not a clinical interpretation.")
+    assert "HbA1c (high)" in dr["conclusion"]
+    hb = next(e["resource"] for e in fhir["entry"] if e["resource"]["resourceType"] == "Observation" and e["resource"]["code"]["coding"][0]["code"] == "718-7")
+    assert hb["code"]["coding"][0]["display"] == "Hemoglobin [Mass/volume] in Blood" and hb["code"]["text"] == "Haemoglobin"
+    org = next(e["resource"] for e in fhir["entry"] if e["resource"]["resourceType"] == "Organization")
+    assert org["identifier"][0]["type"]["coding"][0]["code"] == "OIN"
+    docref = next(e["resource"] for e in fhir["entry"] if e["resource"]["resourceType"] == "DocumentReference")
+    assert docref["content"][0]["attachment"]["data"]
+    lab_abdm = api.get(f"/documents/{lab['id']}/fhir?profile=abdm").json()
+    lab_sections = lab_abdm["entry"][0]["resource"]["section"]
+    assert len(lab_sections) == 1 and [r["type"] for r in lab_sections[0]["entry"]] == ["DiagnosticReport", "DocumentReference"]
+    assert lab_abdm["entry"][0]["resource"]["type"]["coding"][0] == {"system": "http://snomed.info/sct", "code": "4241000179101", "display": "Laboratory report"}
+    assert abdm["entry"][0]["resource"]["type"]["coding"][0]["code"] == "440545006"
+    assert dr["category"][0]["coding"][0]["system"] == "http://snomed.info/sct"
 
     timeline = api.get(f"/patients/{pid}/timeline").json()
     assert [t["document_type"] for t in timeline] == ["prescription", "lab_report"]

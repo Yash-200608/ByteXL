@@ -105,6 +105,33 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
     resolves to IPv6 first on Windows and every call to an IPv4-only server waited ~2 s. `scripts/mock_ollama.py`
     stands in for Ollama there (reference answers for the bundled samples, rules extractor otherwise). PaddleOCR
     runs natively at ~30 s/page; full test suite passes (208 passed, 1 skipped).
+31. First validation against the official NRCeS package (`ndhm.in#6.5.0`, HL7 `validator_cli.jar`, tx.fhir.org):
+    every bundle failed (28–71 errors each). Fixed without SNOMED access:
+    - Practitioner and Organization identifiers: a medical-council registration is filed as `MD` under
+      `urn:bytexl:medical-council-registration` (it was wrongly under the HPR system); otherwise a local
+      `OIN` identifier.
+    - `Bundle.meta.versionId`; the source file is embedded in `DocumentReference` at export time (`embed_source`),
+      and becomes a `Binary` in ABDM prescriptions.
+    - `DiagnosticReport.resultsInterpreter` (pathologist, else lab or hospital) and a deterministic `conclusion`
+      labelled "Software-computed flags, not a clinical interpretation".
+    - Composition sections follow each profile's layout and fixed SNOMED section codes. Encounter diagnoses are
+      linked via `Encounter.diagnosis`, with no `use`, because NRCeS fixes `use` to SNOMED.
+    - The collection export no longer claims the DocumentBundle profile.
+    - Observations carry the official LOINC display (new `loinc_display` column, looked up from tx.fhir.org, LOINC
+      2.82); the printed name stays in `code.text`.
+    Then the fixed SNOMED constants:
+    - Composition.type is 440545006 Prescription record and 373942005 Discharge summary (both fixed by the
+      profiles), and 4241000179101 Laboratory report (the code NRCeS's own lab example uses).
+    - `DiagnosticReport.category` is 708184003 Clinical pathology service.
+    - All codes were checked on tx.fhir.org.
+    Result:
+    - **Lab report bundles validate with 0 errors** (both exports).
+    - Prescriptions have 5 errors (collection export) / 10 (ABDM export); the discharge summary 5 / 10.
+    - All remaining errors are the medicine coding (`urn:bytexl:generic`, which the profile requires to be
+      SNOMED CT) and the MedicationRequest profile mismatches it causes. Fixing them needs the SNOMED CT India
+      Drug Extension (MLDS licence).
+    - Remaining warnings are mostly best-practice: no narrative (dom-6), the local generic code system, and
+      inactive SNOMED 409586006 (Complaint) on complaint Conditions.
 
 ## Deviations
 

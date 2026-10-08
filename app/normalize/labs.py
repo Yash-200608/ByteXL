@@ -15,6 +15,7 @@ class LabRef:
     canonical_name: str
     aliases: tuple[str, ...]
     loinc: str
+    loinc_display: str
     panel: str
     unit: str | None
     low_male: float | None
@@ -63,6 +64,7 @@ def load_lab_reference() -> tuple[LabRef, ...]:
                     canonical_name=row["canonical_name"],
                     aliases=tuple(dict.fromkeys(aliases + (alias_key(row["canonical_name"]),))),
                     loinc=row["loinc"],
+                    loinc_display=row.get("loinc_display") or "",
                     panel=row["panel"],
                     unit=normalize_unit(row["unit"]) if row["unit"] else None,
                     low_male=_f(row["low_male"]),
