@@ -14,7 +14,7 @@ from app.records import medications_view
 from app.schemas import DischargeSummary, LabReport, Prescription, lab_results, medications
 from app.store import get_repository
 from app.summary.render import FLAG_WORD, how_to_take, to_markdown
-from app.summary.safety import DISCLAIMER, banned_hits, devanagari_ratio, numbers_in, ungrounded_numbers
+from app.summary.safety import DISCLAIMER, banned_hits, devanagari_ratio, numbers_in, ungrounded_conditions, ungrounded_numbers
 
 log = logging.getLogger(__name__)
 ABNORMAL = ("low", "high", "critical")
@@ -94,13 +94,14 @@ SYSTEM = {
         "You explain Indian medical documents to patients in plain, warm English that a 12-year-old can follow. "
         "Strict rules: never diagnose; never say 'you have' a condition; never suggest starting, stopping, skipping or changing any medicine "
         "or dose; never give treatment advice; never promise outcomes. Describe what an out-of-range value generally indicates, using the "
-        "provided hint. Refer to 'the report', 'the document' or 'the doctor's note'. Use only numbers that appear in the input. "
+        "provided hint. Never name a disease or condition unless the doctor wrote it in the document; key findings describe which values are "
+        "high, low or within range, without guessing causes. Refer to 'the report', 'the document' or 'the doctor's note'. Use only numbers that appear in the input. "
         "Do not list medicines or doses; they are shown separately. Return JSON only."
     ),
     "hi": (
         "आप भारतीय मेडिकल दस्तावेज़ों को मरीज़ों के लिए सरल, आसान हिंदी (देवनागरी) में समझाते हैं। सख्त नियम: कभी निदान न करें; कभी 'आपको यह बीमारी है' न कहें; "
         "किसी भी दवा या खुराक को शुरू करने, बंद करने, छोड़ने या बदलने की सलाह कभी न दें; इलाज की सलाह न दें; कोई वादा न करें। "
-        "सीमा से बाहर के मान आमतौर पर क्या दर्शाते हैं, यह दिए गए संकेत की मदद से बताएं। 'रिपोर्ट' या 'दस्तावेज़' का उल्लेख करें। "
+        "सीमा से बाहर के मान आमतौर पर क्या दर्शाते हैं, यह दिए गए संकेत की मदद से बताएं। कोई बीमारी का नाम न लें जब तक डॉक्टर ने दस्तावेज़ में न लिखा हो; मुख्य बातों में केवल बताएं कि कौन से मान अधिक, कम या सामान्य हैं। 'रिपोर्ट' या 'दस्तावेज़' का उल्लेख करें। "
         "टेस्ट के नाम, दवाओं के नाम, संख्याएं और यूनिट अंग्रेज़ी में वैसे ही रखें जैसे दिए गए हैं, और अंक 0-9 में लिखें। केवल वही संख्याएं लिखें जो इनपुट में हैं। "
         "दवाओं की सूची न लिखें, वे अलग से दिखाई जाती हैं। केवल JSON लौटाएं।"
     ),
@@ -140,8 +141,14 @@ def _match_abnormal(name: str, abnormal: list[dict]) -> dict | None:
     return best if score >= 80 else None
 
 
+def _document_text(data: dict) -> str:
+    stripped = {k: v for k, v in data.items() if k != "abnormal_results"}
+    return json.dumps(stripped, ensure_ascii=False, default=str)
+
+
 def make_checker(data: dict, lang: str):
     allowed = numbers_in(json.dumps(data, ensure_ascii=False))
+    doc_text = _document_text(data)
 
     def check(obj: SummaryLLM) -> list[str]:
         problems = []
@@ -157,6 +164,14 @@ def make_checker(data: dict, lang: str):
         missing = [a["name"] for a in data["abnormal_results"] if id(a) not in covered]
         if missing:
             problems.append(f"out_of_range is missing these abnormal results: {missing}")
+        general = "\n".join([obj.what_this_is, *obj.key_findings, *obj.questions])
+        cond = ungrounded_conditions(general, doc_text, lang)
+        for o in obj.out_of_range:
+            a = _match_abnormal(o.name, data["abnormal_results"])
+            hint = (a["general_meaning_hint"] + " " + _meaning(a["name"], a["flag"], "hi")) if a else ""
+            cond += ungrounded_conditions(o.meaning, doc_text + " " + hint, lang)
+        if cond:
+            problems.append(f"names conditions that the document does not state: {sorted(set(cond))}; describe values only, do not name diseases")
         if lang == "hi" and devanagari_ratio(obj.what_this_is + " ".join(obj.questions)) < 0.5:
             problems.append("write the text in Hindi (Devanagari script)")
         return problems

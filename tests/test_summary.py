@@ -177,3 +177,36 @@ def test_describe_hi():
     assert describe_hi(parse_dosage("1-0-1", "after food", "x 30 days")) == "सुबह 1, रात 1 · खाने के बाद · 30 दिन तक"
     assert describe_hi(parse_dosage("SOS")) == "केवल ज़रूरत होने पर"
     assert describe_hi(parse_dosage("once a week", "", "x 8 weeks")) == "हफ्ते में एक बार · 8 हफ्ते तक"
+
+
+def test_ungrounded_condition_triggers_retry(api, fake_llm):
+    _, lab, rx = _setup(api)
+    calls = []
+
+    def handler(model, msgs, sch):
+        calls.append(msgs)
+        return summary_for(msgs, bad="High sugar values point to diabetes." if len(calls) == 1 else None)
+
+    fake_llm.handler = handler
+    s = api.get(f"/documents/{lab}/summary?lang=en").json()
+    assert "conditions that the document does not state" in calls[1][-1]["content"]
+    assert "diabetes" not in _all_text(s).lower()
+
+
+def test_condition_written_by_doctor_is_allowed(api, fake_llm):
+    _, _, rx = _setup(api)
+    calls = []
+
+    def handler(model, msgs, sch):
+        calls.append(msgs)
+        return summary_for(msgs, bad="The doctor's note mentions subclinical hypothyroidism.")
+
+    fake_llm.handler = handler
+    s = api.get(f"/documents/{rx}/summary?lang=en").json()
+    assert len(calls) == 1 and s["method"] == "llm"
+
+
+def test_inference_phrases_banned():
+    assert "may indicate" in banned_hits("This may indicate anaemia")
+    assert "suggesting" in banned_hits("suggesting possible diabetes")
+    assert banned_hits("This generally indicates a higher average blood sugar") == []

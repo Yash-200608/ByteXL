@@ -82,7 +82,11 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 24. Medicine fields get grounded, deterministic tidy-ups after extraction: strength re-attached to the name only if
     the combined text appears verbatim in the OCR, duration-shaped "timing" moved to duration, trailing AC/PC/HS
     split from the dosage, "Reg. No." prefixes stripped. Lifted prescription F1 from 0.77–0.81 to 0.96–0.97.
-25. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+25. Condition grounding in summaries (found on the first real-model run, which said "suggesting possible diabetes"
+    for a lab report): LLM prose may name a disease only if the document itself states it (doctor's diagnosis /
+    hospital course), or inside a value's meaning when our curated hint for that test mentions it. Added inference
+    phrases ("may indicate", "suggesting", "risk of", "signs of", …) to the banned list.
+26. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
 
 ## Deviations
 

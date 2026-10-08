@@ -19,7 +19,9 @@ BANNED = {
         "skip your dose", "skip the dose", "change your dose", "you should take", "you must take", "you need to take",
         "start taking", "cured", "cure", "guaranteed", "guarantee", "definitely", "100%", "no need to see",
         "don't need a doctor", "do not need a doctor", "instead of your doctor", "safe to stop", "nothing to worry",
-        "not serious", "is serious", "emergency treatment",
+        "not serious", "is serious", "emergency treatment", "may indicate", "might indicate", "could indicate",
+        "suggesting", "suggests", "suggestive of", "indicating potential", "you may have", "you might have", "sign of",
+        "signs of", "at risk", "risk of", "consistent with", "likely have", "probably have",
     ],
     "hi": [
         "आपको बीमारी है", "आपको यह बीमारी है", "आप पीड़ित हैं", "दवा बंद करें", "दवा बंद कर दें", "दवा लेना बंद",
@@ -27,6 +29,33 @@ BANNED = {
         "डॉक्टर की ज़रूरत नहीं", "डॉक्टर की जरूरत नहीं", "चिंता की कोई बात नहीं",
     ],
 }
+
+CONDITIONS = {
+    "en": [
+        "diabetes", "diabetic", "prediabetes", "pre-diabetes", "anaemia", "anemia", "anaemic", "anemic", "hypothyroidism",
+        "hyperthyroidism", "thyroid disease", "kidney disease", "renal failure", "kidney failure", "ckd", "liver disease",
+        "fatty liver", "hepatitis", "cirrhosis", "heart disease", "cardiovascular", "heart attack", "stroke",
+        "hypertension", "high blood pressure", "dyslipidemia", "dyslipidaemia", "hyperlipidemia", "cholesterol disorder",
+        "gout", "infection", "sepsis", "cancer", "tumour", "tumor", "leukemia", "leukaemia", "dehydration", "deficiency",
+        "malnutrition", "obesity", "metabolic syndrome", "osteoporosis", "pancreatitis",
+    ],
+    "hi": [
+        "मधुमेह", "डायबिटीज", "डायबिटीज़", "प्री-डायबिटीज", "एनीमिया", "खून की कमी", "हाइपोथायरायडिज्म", "थायरॉइड रोग",
+        "किडनी रोग", "किडनी फेल", "लिवर रोग", "फैटी लिवर", "हृदय रोग", "दिल की बीमारी", "हार्ट अटैक", "उच्च रक्तचाप",
+        "हाई ब्लड प्रेशर", "संक्रमण", "कैंसर", "गठिया", "पानी की कमी",
+    ],
+}
+
+
+def ungrounded_conditions(text: str, allowed_text: str, lang: str = "en") -> list[str]:
+    low, allowed = (text or "").lower(), (allowed_text or "").lower()
+    terms = CONDITIONS["en"] + (CONDITIONS["hi"] if lang == "hi" else [])
+    out = []
+    for term in terms:
+        if _pattern(term).search(low) and not _pattern(term).search(allowed):
+            out.append(term)
+    return out
+
 
 NUMBER_RE = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)?")
 
