@@ -384,7 +384,12 @@ it is unreachable (the document is stored and can be retried with `POST /documen
    - Coverage: every abnormal (`low`/`high`/`critical`) result appears in `out_of_range`.
    - Violation → regenerate once with the violations listed; still violating → deterministic template summary.
 4. **Hindi** is generated directly in Hindi with the same structure; medicine names, numbers and units are kept
-   unchanged (checked by grounding); the Hindi disclaimer is fixed text.
+   unchanged (checked by grounding); the Hindi disclaimer is fixed text. Default `HINDI_SUMMARY_MODE=template`
+   composes Hindi from curated Hindi phrases (the 7B model's Hindi was unreliable on CPU test hardware);
+   `HINDI_SUMMARY_MODE=llm` lets the text model write Hindi under the same checks.
+5. **Inference and date checks**: hedged-inference patterns ("may indicate", "could pose risks", "indicating
+   possible") are rejected; a disease may only be named if the document states it; any month next to a number must
+   match a source date.
 
 **Banned phrases (English):** `you have`, `you are suffering`, `you suffer from`, `you are diagnosed`,
 `diagnosed with`, `this confirms`, `this means you have`, `you should stop`, `stop taking`, `stop the`,

@@ -14,7 +14,7 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 | 6 FHIR & API | done | phase 6 |
 | 7 Summaries | done | phase 7 |
 | 8 UI | done | phase 8 |
-| 9 Hardening & demo | pending | |
+| 9 Hardening & demo | done | phase 9 |
 
 ## Environment (build machine)
 
@@ -118,4 +118,10 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 
 ## Next step
 
-Phase 9 — seed, eval results, README, demo script, architecture image.
+All phases done. Remaining by hand:
+1. Fill `samples/expected/*.json` for any real documents you add to `samples/`, then `make eval`.
+2. Fill the hardware line in the master prompt; on a GPU set `VISION_MODEL=qwen2.5vl:7b` and rerun `make eval`.
+3. Optional: try `HINDI_SUMMARY_MODE=llm` on stronger hardware and review Hindi output before demoing it.
+
+State of the build machine at hand-off: MongoDB seeded with demo patient "Rahul Sharma" (5 documents, real-model
+extraction, English LLM summaries), 209 tests passing (`.venv/bin/pytest -q`), real-model eval overall F1 0.96.

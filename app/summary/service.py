@@ -112,7 +112,8 @@ USER = {
         "Document data (already checked; flags were computed by software):\n{data}\n\n"
         "Fill the JSON fields:\n"
         "- what_this_is: 1-2 sentences saying what kind of document this is, who issued it and when.\n"
-        "- key_findings: 2-5 short sentences about the most important points, as written in the document.\n"
+        "- key_findings: 2-5 short factual sentences. For lab values only say which tests are high, low or within range (no explanations, "
+        "no guesses about health effects). For prescriptions and discharge summaries restate what the document says.\n"
         "- out_of_range: one entry for EVERY item in abnormal_results, with 'name' copied exactly and 'meaning' = one plain sentence on what such a value generally indicates. Empty list if abnormal_results is empty.\n"
         "- questions: 3-5 questions the patient could ask their doctor."
     ),
@@ -156,7 +157,7 @@ def make_checker(data: dict, lang: str):
         joined = "\n".join(texts)
         hits = banned_hits(joined, lang)
         if hits:
-            problems.append(f"uses forbidden phrases {hits}; rephrase without them")
+            problems.append(f"uses forbidden phrases {hits}; do not speculate about causes or health effects - state only what the document shows (which values are high or low) and use the provided hint wording for meanings")
         extra = ungrounded_numbers(joined, allowed)
         if extra:
             problems.append(f"mentions numbers not in the input: {extra}; only use numbers from the input")
