@@ -1,0 +1,22 @@
+{
+  "document_type": "lab_report",
+  "patient": {
+    "name": "",
+    "age_years": null,
+    "sex": ""
+  },
+  "facility": "",
+  "referring_doctor": "",
+  "pathologist": "",
+  "collected_on": "",
+  "reported_on": "",
+  "results": [
+    {
+      "test_name": "",
+      "value": null,
+      "value_text": "",
+      "unit": "",
+      "reference_range": ""
+    }
+  ]
+}

@@ -1,0 +1,32 @@
+{
+  "document_type": "prescription",
+  "patient": {
+    "name": "",
+    "age_years": null,
+    "sex": ""
+  },
+  "prescriber": "",
+  "prescriber_registration": "",
+  "facility": "",
+  "date": "",
+  "complaints": [
+    ""
+  ],
+  "diagnoses": [
+    ""
+  ],
+  "medications": [
+    {
+      "name": "",
+      "form": "",
+      "strength": "",
+      "dosage": "",
+      "timing": "",
+      "duration": ""
+    }
+  ],
+  "advice": [
+    ""
+  ],
+  "follow_up": ""
+}

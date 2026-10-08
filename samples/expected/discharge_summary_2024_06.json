@@ -1,0 +1,45 @@
+{
+  "document_type": "discharge_summary",
+  "patient": {
+    "name": "",
+    "age_years": null,
+    "sex": ""
+  },
+  "facility": "",
+  "attending_doctor": "",
+  "admission_date": "",
+  "discharge_date": "",
+  "diagnoses": [
+    ""
+  ],
+  "presenting_complaints": [
+    ""
+  ],
+  "hospital_course": "",
+  "procedures": [
+    ""
+  ],
+  "investigations": [
+    {
+      "test_name": "",
+      "value": null,
+      "value_text": "",
+      "unit": "",
+      "reference_range": ""
+    }
+  ],
+  "discharge_medications": [
+    {
+      "name": "",
+      "form": "",
+      "strength": "",
+      "dosage": "",
+      "timing": "",
+      "duration": ""
+    }
+  ],
+  "follow_up": "",
+  "advice": [
+    ""
+  ]
+}
