@@ -5,7 +5,7 @@ import streamlit as st
 import api_client as api
 from common import STAGES, TYPE_LABEL, safe, setup, summary_card
 
-patient = setup("Upload a document")
+patient = setup("Documents")
 if not patient:
     st.stop()
 

@@ -49,6 +49,7 @@ class PerryTurn(BaseModel):
 class PerryIn(BaseModel):
     message: str = Field(min_length=1, max_length=1000)
     history: list[PerryTurn] = Field(default_factory=list, max_length=20)
+    language: str | None = Field(default=None, max_length=16)
 
 
 def _patient(pid: str) -> dict:
@@ -255,12 +256,22 @@ def export_patient(patient_id: str, profile: Literal["collection", "abdm"] = "co
     return merge_bundles([e for _, e in embedded], patient_id)
 
 
+def _language(code: str | None) -> str | None:
+    from app.agent.language import SUPPORTED_CODES
+
+    if code in (None, "", "auto"):
+        return None
+    if code not in SUPPORTED_CODES:
+        raise HTTPException(422, f"language must be one of: auto, {', '.join(SUPPORTED_CODES)}")
+    return code
+
+
 @router.post("/patients/{patient_id}/perry")
 def post_perry(patient_id: str, body: PerryIn):
     from app.agent import Perry
 
     _patient(patient_id)
-    reply = Perry(patient_id).respond(body.message, [t.model_dump() for t in body.history])
+    reply = Perry(patient_id).respond(body.message, [t.model_dump() for t in body.history], language=_language(body.language))
     return reply.to_dict()
 
 
@@ -268,21 +279,22 @@ MAX_VOICE_UPLOAD = 10 * 1024 * 1024
 NO_SPEECH = "I couldn't hear that clearly. Please try again, or type your question."
 
 
-@router.post("/patients/{patient_id}/perry/voice")
-async def post_perry_voice(patient_id: str, audio: UploadFile = File(...), history: str = Form("[]")):
+def _turns(history: str) -> list[dict]:
     import json
 
     from pydantic import TypeAdapter, ValidationError
 
-    from app.agent import Perry
-    from app.agent.speech import SpeechUnavailable, transcribe, wav_seconds
-    from app.config import get_settings
-
-    _patient(patient_id)
     try:
         turns = TypeAdapter(list[PerryTurn]).validate_python(json.loads(history or "[]"))
     except (ValueError, ValidationError) as exc:
         raise HTTPException(422, "history must be a JSON list of {role, content} turns") from exc
+    return [t.model_dump() for t in turns[-20:]]
+
+
+async def _heard(patient_id: str, audio: UploadFile) -> dict:
+    from app.agent.speech import SpeechUnavailable, transcribe, wav_seconds
+    from app.config import get_settings
+
     data = await audio.read()
     if len(data) > MAX_VOICE_UPLOAD:
         raise HTTPException(413, "The recording is larger than 10 MB.")
@@ -292,15 +304,65 @@ async def post_perry_voice(patient_id: str, audio: UploadFile = File(...), histo
     if seconds is not None and seconds > get_settings().max_voice_seconds:
         raise HTTPException(413, f"Recordings can be at most {get_settings().max_voice_seconds} seconds long.")
     try:
-        heard = transcribe(data, _voice_vocabulary(patient_id))
+        return transcribe(data, _voice_vocabulary(patient_id))
     except SpeechUnavailable as exc:
         raise HTTPException(503, f"Voice isn't set up on this device yet: {exc}") from exc
+
+
+def _heard_fields(heard: dict) -> dict:
+    return {"transcript": heard["text"], "heard_raw": heard.get("raw_text"), "corrections": heard.get("corrections", []),
+            "heard_language": heard["language"], "stt_seconds": heard["duration_s"]}
+
+
+@router.post("/patients/{patient_id}/perry/transcribe")
+async def post_perry_transcribe(patient_id: str, audio: UploadFile = File(...)):
+    _patient(patient_id)
+    heard = await _heard(patient_id, audio)
+    return {**_heard_fields(heard), "state": "ok" if heard["text"] else "no_speech", "message": None if heard["text"] else NO_SPEECH}
+
+
+@router.post("/patients/{patient_id}/perry/voice")
+async def post_perry_voice(patient_id: str, audio: UploadFile = File(...), history: str = Form("[]"), language: str = Form("auto")):
+    from app.agent import Perry
+
+    _patient(patient_id)
+    turns = _turns(history)
+    code = _language(language)
+    heard = await _heard(patient_id, audio)
     if not heard["text"]:
         return {"reply": NO_SPEECH, "language": "en", "language_name": "English", "method": "composed", "intent": "voice",
                 "state": "no_speech", "tools": [], "sources": [], "transcript": "", "heard_language": heard["language"]}
-    reply = Perry(patient_id).respond(heard["text"], [t.model_dump() for t in turns[-20:]]).to_dict()
-    return {**reply, "transcript": heard["text"], "heard_raw": heard.get("raw_text"), "corrections": heard.get("corrections", []),
-            "heard_language": heard["language"], "stt_seconds": heard["duration_s"]}
+    reply = Perry(patient_id).respond(heard["text"], turns, language=code).to_dict()
+    return {**reply, **_heard_fields(heard)}
+
+
+class FeedbackIn(BaseModel):
+    rating: Literal["up", "down"]
+    reply: str = Field(min_length=1, max_length=4000)
+    question: str | None = Field(default=None, max_length=1000)
+    language: str | None = Field(default=None, max_length=16)
+    tools: list[str] = Field(default_factory=list, max_length=6)
+
+
+@router.post("/patients/{patient_id}/perry/feedback", status_code=201)
+def post_perry_feedback(patient_id: str, body: FeedbackIn):
+    import uuid
+
+    from app.patients import now
+
+    _patient(patient_id)
+    record = {"_id": f"fb_{uuid.uuid4().hex[:12]}", "patient_id": patient_id, "rating": body.rating, "reply": body.reply[:4000],
+              "question": body.question, "language": body.language, "tools": body.tools, "created_at": now()}
+    get_repository().insert("perry_feedback", record)
+    return {"ok": True}
+
+
+@router.get("/patients/{patient_id}/overview")
+def get_overview(patient_id: str):
+    from app.agent import PerryTools
+
+    _patient(patient_id)
+    return PerryTools(patient_id).call("get_my_overview")
 
 
 def _voice_vocabulary(patient_id: str) -> list[str]:

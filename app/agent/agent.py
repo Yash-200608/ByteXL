@@ -6,7 +6,7 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.agent.language import ENGLISH, Language, detect_language, reply_instruction
+from app.agent.language import ENGLISH, Language, detect_language, language_from_code, reply_instruction
 from app.agent.prompts import ANSWER, GENERAL, PLANNER, SYSTEM
 from app.agent.tools import STOPWORDS, TEST_SYNONYMS, TOOLS, PerryTools, ToolError
 from app.agent.translate import from_english, target_name, to_english
@@ -87,7 +87,8 @@ def sources(results: list[ToolResult]) -> list[dict]:
             fn = node.get("filename") or (node.get("source") if isinstance(node.get("source"), str) and "." in node.get("source", "") else None)
             if fn and fn not in seen:
                 seen.add(fn)
-                out.append({"filename": fn, "title": node.get("title") or node.get("source_type"), "date_text": node.get("date_text")})
+                out.append({"filename": fn, "title": node.get("title") or node.get("source_type"), "date_text": node.get("date_text"),
+                            "document_id": node.get("document_id")})
             for v in node.values():
                 visit(v)
         elif isinstance(node, list):
@@ -219,10 +220,10 @@ class Perry:
         self.tools = PerryTools(patient_id)
         self.settings = get_settings()
 
-    def respond(self, message: str, history: list[dict] | None = None) -> PerryReply:
+    def respond(self, message: str, history: list[dict] | None = None, language: str | None = None) -> PerryReply:
         message = (message or "").strip()[:1000]
         history = (history or [])[-self.settings.perry_history_turns * 2:]
-        lang = detect_language(message)
+        lang = language_from_code(language) if language else detect_language(message)
         if not self._translates(lang):
             return self._respond(message, history, lang)
         english = to_english(message, lang) if self.settings.perry_indic_mode == "translate" else None
@@ -363,24 +364,24 @@ def check_answer(text: str, lang: Language, data: str, message: str, history: li
 
 PH = {
     "en": {
-        "not_found": "I couldn't find that information in your ByteXL records.",
+        "not_found": "I couldn't find that information in your health records.",
         "error": "I couldn't access that part of your records right now. Please try again in a moment.",
-        "greeting": "Hi! I'm PERRY, your ByteXL assistant. Ask me about your reports, lab values, medicines, your timeline, or anything waiting for confirmation.",
+        "greeting": "Hi! I'm PERRY, your personal health assistant. Ask me about your reports, lab values, medicines, your timeline, or anything waiting for confirmation.",
         "treatment": "I can't make that decision for you — starting, stopping or changing a medicine is something to decide with your doctor. Here's what your records show, exactly as written:",
-        "treatment_none": "I can't make that decision for you — starting, stopping or changing a medicine is something to decide with your doctor. I couldn't find medicines in your ByteXL records.",
+        "treatment_none": "I can't make that decision for you — starting, stopping or changing a medicine is something to decide with your doctor. I couldn't find medicines in your health records.",
         "latest_lab": "Your latest **{name}** was **{value}**{flag}, according to your {stype} dated {date}.",
         "earlier": "Earlier: {items}.",
         "labs_head": "Here are your most recent lab results:",
         "meds_head": "Here are the medicines in your records, exactly as written:",
         "meds_current": "Currently active (as of {date}):",
         "meds_older": "Also recorded earlier:",
-        "docs_head": "You have {count} document(s) in ByteXL. Most recent first:",
+        "docs_head": "You have {count} document(s) in PERRY. Most recent first:",
         "timeline_head": "Here's your health timeline, newest first:",
         "pending_head": "{count} detail(s) are waiting for your confirmation:",
         "pending_none": "Good news — nothing is waiting for your confirmation.",
         "compare_head": "Here's what changed between your two most recent measurements:",
         "compare_none": "Nothing to compare yet — no lab test appears on two different dates in your records.",
-        "overview_head": "Here's a quick overview of your ByteXL records, {name}:",
+        "overview_head": "Here's a quick overview of your health records, {name}:",
         "ov_docs": "**{total}** documents ({types}), from {first} to {last}.",
         "ov_latest": "Latest: {items}.",
         "ov_abn": "Out of range in your latest lab report ({date}): {items}.",
@@ -404,9 +405,9 @@ PH = {
         "source": "{stype}, {date}",
     },
     "hi": {
-        "not_found": "मुझे यह जानकारी आपके ByteXL रिकॉर्ड में नहीं मिली।",
+        "not_found": "मुझे यह जानकारी आपके हेल्थ रिकॉर्ड में नहीं मिली।",
         "error": "मैं अभी आपके रिकॉर्ड का यह हिस्सा नहीं खोल पाया। कृपया थोड़ी देर बाद फिर कोशिश करें।",
-        "greeting": "नमस्ते! मैं PERRY हूं, आपका ByteXL सहायक। अपनी रिपोर्ट, लैब मान, दवाएं, टाइमलाइन या पुष्टि के लिए बाकी जानकारी के बारे में पूछिए।",
+        "greeting": "नमस्ते! मैं PERRY हूं, आपका पर्सनल हेल्थ असिस्टेंट। अपनी रिपोर्ट, लैब मान, दवाएं, टाइमलाइन या पुष्टि के लिए बाकी जानकारी के बारे में पूछिए।",
         "treatment": "यह फैसला मैं नहीं ले सकता — कोई दवा शुरू करना, बंद करना या बदलना अपने डॉक्टर से तय करें। आपके रिकॉर्ड में जैसा लिखा है, वैसा यहां है:",
         "treatment_none": "यह फैसला मैं नहीं ले सकता — कोई दवा शुरू करना, बंद करना या बदलना अपने डॉक्टर से तय करें। आपके रिकॉर्ड में कोई दवा नहीं मिली।",
         "latest_lab": "आपका सबसे हाल का **{name}** **{value}** था{flag}, आपकी {stype} ({date}) के अनुसार।",
@@ -415,13 +416,13 @@ PH = {
         "meds_head": "आपके रिकॉर्ड में दवाएं, जैसा लिखा है:",
         "meds_current": "अभी चल रही ({date} तक):",
         "meds_older": "पहले लिखी गई:",
-        "docs_head": "ByteXL में आपके {count} दस्तावेज़ हैं। सबसे नए पहले:",
+        "docs_head": "PERRY में आपके {count} दस्तावेज़ हैं। सबसे नए पहले:",
         "timeline_head": "आपकी हेल्थ टाइमलाइन, सबसे नई पहले:",
         "pending_head": "{count} जानकारी आपकी पुष्टि का इंतज़ार कर रही है:",
         "pending_none": "अच्छी खबर — पुष्टि के लिए कुछ भी बाकी नहीं है।",
         "compare_head": "आपकी पिछली दो जांचों के बीच यह बदला:",
         "compare_none": "अभी तुलना के लिए कुछ नहीं है — कोई भी जांच दो अलग तारीखों पर नहीं है।",
-        "overview_head": "{name}, आपके ByteXL रिकॉर्ड का छोटा सा सार:",
+        "overview_head": "{name}, आपके हेल्थ रिकॉर्ड का छोटा सा सार:",
         "ov_docs": "**{total}** दस्तावेज़ ({types}), {first} से {last} तक।",
         "ov_latest": "सबसे नए: {items}।",
         "ov_abn": "आपकी सबसे नई लैब रिपोर्ट ({date}) में सीमा से बाहर: {items}।",
@@ -445,9 +446,9 @@ PH = {
         "source": "{stype}, {date}",
     },
     "hinglish": {
-        "not_found": "Mujhe yeh jaankari aapke ByteXL records mein nahi mili.",
+        "not_found": "Mujhe yeh jaankari aapke health records mein nahi mili.",
         "error": "Main abhi aapke records ka yeh hissa access nahi kar paaya. Thodi der baad phir try kijiye.",
-        "greeting": "Namaste! Main PERRY hoon, aapka ByteXL assistant. Apni reports, lab values, medicines, timeline ya pending confirmations ke baare mein kuch bhi poochiye.",
+        "greeting": "Namaste! Main PERRY hoon, aapka personal health assistant. Apni reports, lab values, medicines, timeline ya pending confirmations ke baare mein kuch bhi poochiye.",
         "treatment": "Yeh faisla main nahi le sakta — koi dawa shuru karni hai, band karni hai ya badalni hai, yeh apne doctor se tay kijiye. Aapke records mein jaisa likha hai, woh yeh hai:",
         "treatment_none": "Yeh faisla main nahi le sakta — dawa ke baare mein apne doctor se baat kijiye. Aapke records mein koi dawa nahi mili.",
         "latest_lab": "Aapka latest **{name}** **{value}** tha{flag}, aapki {stype} ({date}) ke hisaab se.",
@@ -456,13 +457,13 @@ PH = {
         "meds_head": "Aapke records mein yeh medicines hain, bilkul jaisa likha hai:",
         "meds_current": "Abhi chal rahi ({date} tak):",
         "meds_older": "Pehle likhi gayi:",
-        "docs_head": "ByteXL mein aapke {count} documents hain. Sabse naye pehle:",
+        "docs_head": "PERRY mein aapke {count} documents hain. Sabse naye pehle:",
         "timeline_head": "Yeh rahi aapki health timeline, sabse nayi pehle:",
         "pending_head": "{count} details aapke confirmation ka wait kar rahi hain:",
         "pending_none": "Good news — kuch bhi confirmation ke liye pending nahi hai.",
         "compare_head": "Aapki pichhli do measurements ke beech yeh badla:",
         "compare_none": "Abhi compare karne ke liye kuch nahi hai — koi bhi test do alag dates par nahi hai.",
-        "overview_head": "{name}, yeh raha aapke ByteXL records ka quick overview:",
+        "overview_head": "{name}, yeh raha aapke health records ka quick overview:",
         "ov_docs": "**{total}** documents ({types}), {first} se {last} tak.",
         "ov_latest": "Sabse naye: {items}.",
         "ov_abn": "Aapki latest lab report ({date}) mein range se bahar: {items}.",

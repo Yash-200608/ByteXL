@@ -1,3 +1,4 @@
+import html
 import io
 import json
 
@@ -27,29 +28,191 @@ STAGES = [
     ("done", "Done"),
 ]
 
-CSS = """
-<style>
-.block-container, [data-testid="stMainBlockContainer"] {padding-top: 4.6rem !important; max-width: 1200px;}
+NAV = [
+    ("views/perry.py", "Chat with PERRY", ":material/forum:"),
+    ("views/document.py", "My Reports", ":material/lab_profile:"),
+    ("views/medications.py", "Medications", ":material/medication:"),
+    ("views/timeline.py", "Timeline", ":material/calendar_month:"),
+    ("views/trends.py", "Overview", ":material/space_dashboard:"),
+    ("views/upload.py", "Documents", ":material/description:"),
+    ("views/fhir.py", "FHIR Record", ":material/integration_instructions:"),
+    ("views/confirm.py", "Pending Items", ":material/pending_actions:"),
+]
+HAT = ('<svg class="hat" width="64" height="34" viewBox="0 0 64 34"><ellipse cx="32" cy="26" rx="30" ry="7" fill="#5A1A24"/>'
+       '<path d="M14 25 C14 9 22 3 32 3 C42 3 50 9 50 25 C42 22 22 22 14 25 Z" fill="#7A2734"/>'
+       '<path d="M15 20 C24 17 40 17 49 20 L49 24 C40 21 24 21 15 24 Z" fill="#2E0A10"/></svg>')
+SWOOSH = ('<svg class="p-swoosh" viewBox="0 0 300 18" preserveAspectRatio="none"><path d="M4 13 C80 4 200 2 296 8 C200 7 90 10 12 17 Z" '
+          'fill="#F7941D"/></svg>')
+BX_CSS = """<style>
 .bx-chip {display:inline-block; padding:2px 10px; border-radius:999px; font-size:0.82rem; font-weight:600; margin:2px 4px 2px 0;}
-.bx-card {border:1px solid rgba(128,128,128,0.25); border-radius:12px; padding:14px 16px; margin-bottom:12px;}
+.bx-card {border:1px solid rgba(46,230,214,0.25); border-radius:16px; padding:14px 16px; margin-bottom:12px; background: rgba(10,42,46,.5);}
 .bx-muted {opacity:0.7; font-size:0.88rem;}
-.bx-header {display:flex; flex-wrap:wrap; gap:12px 28px; align-items:baseline; padding:10px 14px; border-radius:12px;
-            background: rgba(14,116,144,0.08); margin-bottom:10px;}
+.bx-header {display:flex; flex-wrap:wrap; gap:12px 28px; align-items:baseline; padding:10px 14px; border-radius:16px;
+            background: rgba(10,42,46,.55); border:1px solid rgba(46,230,214,.2); margin-bottom:10px;}
 .bx-header b {font-size:1.15rem;}
 .bx-disclaimer {border-left:4px solid #b45309; background: rgba(245,158,11,0.10); padding:10px 12px; border-radius:6px; font-size:0.9rem;}
 .bx-warn {border-left:4px solid #b91c1c; background: rgba(239,68,68,0.08); padding:8px 12px; border-radius:6px; margin:4px 0;}
-@media (max-width: 640px) { .bx-header {flex-direction:column; gap:4px;} .block-container {padding-left:0.8rem; padding-right:0.8rem;} }
-</style>
-"""
+</style>"""
 
 
-def setup(title: str):
-    st.markdown(CSS, unsafe_allow_html=True)
-    patient = patient_sidebar()
-    if patient:
-        patient_header(patient)
-    st.subheader(title)
+def css() -> str:
+    from theme import SCENE, theme_css
+
+    return theme_css() + BX_CSS + SCENE
+
+
+CSS = BX_CSS
+
+
+def initials(name: str) -> str:
+    parts = [p for p in (name or "").split() if p[:1].isalpha()]
+    return ("".join(p[0] for p in parts[:2]) or "P").upper()
+
+
+def setup(title: str | None = None, show_title: bool = True):
+    st.markdown(css(), unsafe_allow_html=True)
+    patient = shell()
+    if title and show_title and patient:
+        st.subheader(title)
     return patient
+
+
+def shell() -> dict | None:
+    patient = sidebar()
+    header(patient)
+    return patient
+
+
+def _patients() -> list[dict] | None:
+    try:
+        return api.get("/patients")
+    except api.ApiError as exc:
+        st.error(str(exc))
+        return None
+
+
+def sidebar() -> dict | None:
+    with st.sidebar:
+        st.markdown(f'<div class="p-logo">{HAT}<div class="w">PERRY</div><div class="s">Your Personal<br>Health Assistant</div></div>',
+                    unsafe_allow_html=True)
+        for path, label, icon in NAV:
+            st.page_link(path, label=label, icon=icon)
+        patients = _patients()
+        if patients is None:
+            return None
+        if patients:
+            ids = [p["_id"] for p in patients]
+            if st.session_state.get("patient_id") not in ids:
+                st.session_state["patient_id"] = ids[-1]
+        pid = st.session_state.get("patient_id")
+        patient = next((p for p in patients or [] if p["_id"] == pid), None)
+        if patient:
+            st.markdown(f'<div class="p-user"><div class="p-ava">{html.escape(initials(patient["name"]))}</div>'
+                        f'<div><div class="n">{html.escape(patient["name"])}</div><div class="r">Patient</div></div></div>',
+                        unsafe_allow_html=True)
+            docs = safe(api.get, f"/patients/{pid}/documents", default=[]) or []
+            waiting = sum(d.get("pending_confirmations") or 0 for d in docs)
+            if waiting:
+                st.markdown(f'<style>[data-testid="stSidebar"] a[href$="confirm"]::after {{content: "{waiting}"; margin-left: auto; min-width: 22px; '
+                            'height: 22px; padding: 0 6px; border-radius: 999px; background: #F7941D; color: #1A0F00; font-weight: 800; '
+                            'font-size: .78rem; display: grid; place-items: center;}}</style>', unsafe_allow_html=True)
+        with st.container(key="p-settings"):
+            with st.popover("Settings", icon=":material/settings:", width="stretch"):
+                settings_panel(patients or [])
+    if not patient:
+        st.markdown('<div class="p-card p-empty"><b>PERRY is ready.</b><br>Create your profile under <b>Settings</b> in the sidebar, '
+                    "then upload your first health record and I'll help you understand it.</div>", unsafe_allow_html=True)
+        return None
+    return patient
+
+
+def settings_panel(patients: list[dict]):
+    if patients:
+        ids = [p["_id"] for p in patients]
+        current = st.session_state.get("patient_id")
+        choice = st.selectbox("Profile", ids, index=ids.index(current) if current in ids else len(ids) - 1, key="p-profile",
+                              format_func=lambda i: next(p["name"] for p in patients if p["_id"] == i))
+        if choice != current:
+            st.session_state["patient_id"] = choice
+            st.rerun()
+    with st.expander("➕ New profile", expanded=not patients):
+        with st.form("new_patient", clear_on_submit=True):
+            name = st.text_input("Full name")
+            sex = st.selectbox("Sex", ["male", "female", "other"])
+            year = st.number_input("Birth year", min_value=1900, max_value=2026, value=1980)
+            if st.form_submit_button("Create") and name.strip():
+                p = safe(api.post, "/patients", json={"name": name, "sex": sex, "birth_year": int(year)})
+                if p:
+                    st.session_state["patient_id"] = p["_id"]
+                    st.rerun()
+    health_badge()
+
+
+def health_badge():
+    h = _health()
+    if not h:
+        st.caption("🔴 PERRY's service is offline")
+        return
+    ok = h["ollama"]["reachable"] and h["models"]["vision_available"] and h["models"]["text_available"]
+    st.caption(f"{'🟢' if ok else '🟠'} AI models {'ready' if ok else 'unavailable – basic reader will be used'} · storage: {h['store']['backend']}")
+
+
+def _health() -> dict | None:
+    try:
+        return api.health()
+    except api.ApiError:
+        return None
+
+
+def _notifications(patient: dict) -> list[str]:
+    items = []
+    docs = safe(api.get, f"/patients/{patient['_id']}/documents", default=[]) or []
+    pending = sum(d.get("pending_confirmations") or 0 for d in docs)
+    if pending:
+        items.append(f"⏳ {pending} detail(s) waiting for your confirmation")
+    meds = safe(api.get, f"/patients/{patient['_id']}/medications", default={}) or {}
+    items += [f"⚠️ {n['text']}" for n in meds.get("reconciliation_notes", [])]
+    processing = [d for d in docs if (d.get("status") or {}).get("state") in ("queued", "running")]
+    if processing:
+        items.append(f"📄 {len(processing)} document(s) still being read")
+    return items
+
+
+def _search():
+    query = (st.session_state.get("p-search") or "").strip()
+    pid = st.session_state.get("patient_id")
+    if query and pid:
+        from perry_chat import ask
+
+        ask(pid, f"Find {query} in my records" if len(query.split()) <= 3 else query)
+        st.session_state["p-search-go"] = True
+    st.session_state["p-search"] = ""
+
+
+def header(patient: dict | None):
+    c1, c2, c3, c4 = st.columns([2.4, 1.7, 0.32, 0.5], vertical_alignment="center")
+    with c1:
+        st.markdown(f'<div class="p-tagline">All your health records.<br>One intelligent companion.</div>{SWOOSH}', unsafe_allow_html=True)
+    if not patient:
+        return
+    with c2:
+        st.text_input("Search your records", placeholder="Search your records...", label_visibility="collapsed", key="p-search",
+                      on_change=_search, icon=":material/search:")
+    with c3:
+        notes = _notifications(patient)
+        with st.container(key="p-bell"):
+            with st.popover(str(len(notes)) if notes else " ", icon=":material/notifications:"):
+                if notes:
+                    for n in notes:
+                        st.markdown(n)
+                else:
+                    st.markdown("You're all clear. Nothing needs your attention right now.")
+    with c4:
+        online = _health() is not None
+        st.markdown(f'<div class="p-head-ava" title="{html.escape(patient["name"])}">{html.escape(initials(patient["name"]))}</div>'
+                    f'<div class="p-online">{"<b></b>PERRY ONLINE" if online else "OFFLINE"}</div>', unsafe_allow_html=True)
+    if st.session_state.pop("p-search-go", False):
+        st.switch_page("views/perry.py")
 
 
 def chip(text: str, flag: str = "unknown") -> str:
@@ -67,49 +230,6 @@ def safe(fn, *args, default=None, **kwargs):
     except api.ApiError as exc:
         st.error(str(exc))
         return default
-
-
-def patient_sidebar() -> dict | None:
-    with st.sidebar:
-        st.markdown("### 🩺 ByteXL")
-        st.caption("Your health records, explained.")
-        try:
-            patients = api.get("/patients")
-        except api.ApiError as exc:
-            st.error(str(exc))
-            return None
-        if patients:
-            ids = [p["_id"] for p in patients]
-            current = st.session_state.get("patient_id")
-            idx = ids.index(current) if current in ids else len(ids) - 1
-            pid = st.selectbox("Patient", ids, index=idx, format_func=lambda i: next(p["name"] for p in patients if p["_id"] == i))
-            st.session_state["patient_id"] = pid
-        with st.expander("➕ New patient", expanded=not patients):
-            with st.form("new_patient", clear_on_submit=True):
-                name = st.text_input("Full name")
-                sex = st.selectbox("Sex", ["male", "female", "other"])
-                year = st.number_input("Birth year", min_value=1900, max_value=2026, value=1980)
-                if st.form_submit_button("Create") and name.strip():
-                    p = safe(api.post, "/patients", json={"name": name, "sex": sex, "birth_year": int(year)})
-                    if p:
-                        st.session_state["patient_id"] = p["_id"]
-                        st.rerun()
-        health_badge()
-    pid = st.session_state.get("patient_id")
-    if not pid:
-        st.info("Create a patient profile in the sidebar to get started.")
-        return None
-    return safe(api.get, f"/patients/{pid}")
-
-
-def health_badge():
-    try:
-        h = api.health()
-    except api.ApiError:
-        st.caption("🔴 API offline")
-        return
-    ok = h["ollama"]["reachable"] and h["models"]["vision_available"] and h["models"]["text_available"]
-    st.caption(f"{'🟢' if ok else '🟠'} AI models {'ready' if ok else 'unavailable – basic reader will be used'} · storage: {h['store']['backend']}")
 
 
 def patient_header(p: dict):

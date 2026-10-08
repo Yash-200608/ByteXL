@@ -22,7 +22,7 @@ INDIAN_VOICE_NAMES = {
 }
 SAMPLE = {
     "en": "Hi, I'm PERRY. Your latest HbA1c was 6.6%, according to your lab report dated 20 Sep 2024.",
-    "hi": "नमस्ते, मैं PERRY हूं। मैं आपके ByteXL रिकॉर्ड समझने में मदद करता हूं।",
+    "hi": "नमस्ते, मैं PERRY हूं। मैं आपके हेल्थ रिकॉर्ड समझने में मदद करता हूं।",
 }
 MAX_SPEECH_CHARS = 1200
 FILENAME = re.compile(r"\S+\.(?:pdf|png|jpe?g)\b", re.I)
@@ -157,6 +157,10 @@ function go() {{
   if (v) u.voice = v;
   u.rate = p.rate;
   u.pitch = p.pitch;
+  const body = w.document.body;
+  u.onstart = () => body.classList.add('perry-speaking');
+  u.onend = () => body.classList.remove('perry-speaking');
+  u.onerror = () => body.classList.remove('perry-speaking');
   synth.speak(u);
 }}
 if (synth && synth.getVoices().length) go(); else if (synth) synth.addEventListener('voiceschanged', go, {{once: true}});
@@ -164,7 +168,8 @@ if (synth && synth.getVoices().length) go(); else if (synth) synth.addEventListe
 
 
 def stop_speaking() -> None:
-    components.html("<script>window.parent.speechSynthesis && window.parent.speechSynthesis.cancel();</script>", height=0)
+    components.html("<script>window.parent.speechSynthesis && window.parent.speechSynthesis.cancel();"
+                    "window.parent.document.body.classList.remove('perry-speaking');</script>", height=0)
 
 
 _mic = components.declare_component("perry_mic", path=str(Path(__file__).parent / "components" / "perry_mic"))

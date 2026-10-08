@@ -6,7 +6,7 @@ import streamlit as st
 import api_client as api
 from common import TYPE_LABEL, conf_badge, crop, doc_label, flag_label, highlight, page_image, safe, setup, summary_card
 
-patient = setup("Document")
+patient = setup("My Reports")
 if not patient:
     st.stop()
 

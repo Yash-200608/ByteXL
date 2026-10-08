@@ -1,13 +1,8 @@
 import streamlit as st
 
-st.set_page_config(page_title="ByteXL · PERRY", page_icon="🩺", layout="wide")
+from common import NAV
 
-pages = [
-    st.Page("views/perry.py", title="PERRY", icon="✨", default=True),
-    st.Page("views/upload.py", title="Upload", icon="📤"),
-    st.Page("views/timeline.py", title="Timeline", icon="🗓️"),
-    st.Page("views/document.py", title="Document", icon="📄"),
-    st.Page("views/trends.py", title="Trends", icon="📈"),
-    st.Page("views/confirm.py", title="Confirm", icon="✅"),
-]
-st.navigation(pages).run()
+st.set_page_config(page_title="PERRY · Your Personal Health Assistant", page_icon="🩺", layout="wide", initial_sidebar_state="expanded")
+
+pages = [st.Page(path, title=label, icon=icon, default=(i == 0)) for i, (path, label, icon) in enumerate(NAV)]
+st.navigation(pages, position="hidden").run()

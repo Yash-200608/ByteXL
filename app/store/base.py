@@ -1,7 +1,7 @@
 from abc import ABC, abstractmethod
 from typing import Any
 
-COLLECTIONS = ("patients", "documents", "bundles", "observations_index", "summaries")
+COLLECTIONS = ("patients", "documents", "bundles", "observations_index", "summaries", "perry_feedback")
 
 
 def matches(doc: dict, query: dict) -> bool:

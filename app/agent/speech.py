@@ -58,9 +58,9 @@ def vocabulary_prompt(personal: list[str] | None = None, limit: int = 40) -> str
     personal = list(dict.fromkeys(t for t in personal or [] if t))[:limit]
     brands = [b for b in sorted({m.brand for m in load_medicines().values()}) if b not in personal][: max(0, limit - len(personal))]
     tests = [t for t in PROMPT_TESTS if t not in personal]
-    return ("A patient in India asks PERRY about their ByteXL medical records: lab reports, prescriptions, discharge summary. "
+    return ("A patient in India asks PERRY about their medical records: lab reports, prescriptions, discharge summary. "
             f"Their records mention: {', '.join(personal)}. " if personal else
-            "A patient in India asks PERRY about their ByteXL medical records: lab reports, prescriptions, discharge summary. ") + \
+            "A patient in India asks PERRY about their medical records: lab reports, prescriptions, discharge summary. ") + \
         f"Tests: {', '.join(tests)}. Medicines: {', '.join(brands)}."
 
 

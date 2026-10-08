@@ -132,7 +132,7 @@ class PerryTools:
         self._repo = get_repository()
         self._patient = self._repo.get("patients", patient_id)
         if not self._patient:
-            raise ToolError("This ByteXL account could not be found.")
+            raise ToolError("This PERRY account could not be found.")
 
     @staticmethod
     def specs() -> list[dict]:

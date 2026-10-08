@@ -1,0 +1,12 @@
+[server]
+enableStaticServing = true
+
+[theme]
+base = "dark"
+primaryColor = "#2EE6D6"
+backgroundColor = "#061B1E"
+secondaryBackgroundColor = "#0B2A2E"
+textColor = "#E8FBF8"
+
+[client]
+toolbarMode = "minimal"

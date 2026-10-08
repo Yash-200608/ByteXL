@@ -93,3 +93,19 @@ def reply_instruction(lang: Language) -> str:
         return ("Reply in Hinglish: conversational Hindi written in Roman (English) letters, the way the user wrote, "
                 f"mixing in English words naturally. Do not use Devanagari. {keep}")
     return f"Reply in {lang.name}, written in the {lang.script} script. {keep}"
+
+
+HINGLISH = Language("hinglish", "Hinglish", "Latin")
+SUPPORTED_CODES = ("en", "hinglish", *LANGUAGES)
+
+
+def language_from_code(code: str | None) -> Language:
+    code = (code or "").strip().lower()
+    if code == "en":
+        return ENGLISH
+    if code == "hinglish":
+        return HINGLISH
+    if code in LANGUAGES:
+        name, script, _ = LANGUAGES[code]
+        return Language(code, name, script)
+    raise ValueError(f"Unsupported language code {code!r}")

@@ -54,6 +54,7 @@ if (!Recognition) {
 
 function stop() {
   listening = false;
+  try { window.parent.document.body.classList.remove('perry-listening'); } catch (e) {}
   btn.classList.remove("on");
   label.textContent = "Speak";
 }
@@ -67,7 +68,7 @@ btn.addEventListener("click", () => {
   rec.interimResults = true;
   rec.maxAlternatives = 1;
   rec.continuous = false;
-  rec.onstart = () => { listening = true; btn.classList.add("on"); label.textContent = "Listening… tap to stop"; hint.classList.remove("err"); hint.textContent = ""; };
+  rec.onstart = () => { listening = true; try { window.parent.document.body.classList.add('perry-listening'); } catch (e) {} btn.classList.add("on"); label.textContent = "Listening… tap to stop"; hint.classList.remove("err"); hint.textContent = ""; };
   rec.onresult = (e) => {
     let interim = "";
     for (let i = e.resultIndex; i < e.results.length; i++) {

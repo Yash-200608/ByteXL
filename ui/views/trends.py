@@ -5,14 +5,27 @@ import streamlit as st
 import api_client as api
 from common import FLAG_STYLE, flag_label, safe, setup
 
-patient = setup("Trends")
+patient = setup("Overview")
 if not patient:
     st.stop()
 pid = patient["_id"]
 
+ov = safe(api.get, f"/patients/{pid}/overview", default={}) or {}
+stats = [
+    ("Health records", (ov.get("documents") or {}).get("total", 0)),
+    ("Out of range (latest lab)", len(ov.get("latest_out_of_range") or [])),
+    ("Current medicines", len(ov.get("current_medicines") or [])),
+    ("Pending items", ov.get("pending_confirmations", 0)),
+]
+for col, (k, v) in zip(st.columns(4), stats):
+    col.markdown(f'<div class="p-stat"><div class="k">{k}</div><div class="v">{v}</div></div>', unsafe_allow_html=True)
+st.write("")
+st.markdown("#### Trends")
+
 tests = safe(api.get, f"/patients/{pid}/trends", default=[])
 if not tests:
-    st.info("Upload lab reports to see how your values change over time.")
+    st.markdown('<div class="p-card p-empty"><b>No lab results yet.</b><br>Upload lab reports to see how your values change over time.</div>',
+                unsafe_allow_html=True)
     st.stop()
 
 options = [t["loinc"] for t in tests]

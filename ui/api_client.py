@@ -13,7 +13,7 @@ def _req(method: str, path: str, timeout: float = 30.0, **kw):
     try:
         r = httpx.request(method, f"{API_URL}{path}", timeout=timeout, **kw)
     except httpx.HTTPError as exc:
-        raise ApiError(f"Cannot reach the ByteXL API at {API_URL}. Is it running? ({exc.__class__.__name__})") from exc
+        raise ApiError(f"Cannot reach the PERRY API at {API_URL}. Is it running? ({exc.__class__.__name__})") from exc
     if r.status_code >= 400:
         try:
             detail = r.json().get("detail")

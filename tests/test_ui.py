@@ -34,24 +34,26 @@ def ui_env(client, fake_llm, monkeypatch):
     sys.modules.pop("common", None)
 
 
-@pytest.mark.parametrize("page", ["upload", "timeline", "document", "trends", "confirm"])
-def test_page_renders(ui_env, page):
+def _open(pid, page):
     from streamlit.testing.v1 import AppTest
 
-    at = AppTest.from_file(str(UI / "views" / f"{page}.py"), default_timeout=60)
-    at.session_state["patient_id"] = ui_env
+    at = AppTest.from_file(str(UI / "app.py"), default_timeout=60)
+    at.session_state["patient_id"] = pid
+    at.switch_page(f"views/{page}.py")
     at.run()
+    return at
+
+
+@pytest.mark.parametrize("page", ["perry", "upload", "timeline", "document", "trends", "confirm", "medications", "fhir"])
+def test_page_renders(ui_env, page):
+    at = _open(ui_env, page)
     assert not at.exception, [e.message for e in at.exception]
     text = " ".join(m.value for m in at.markdown)
     assert "Rahul Sharma" in text
 
 
 def test_document_source_picker_and_summary(ui_env):
-    from streamlit.testing.v1 import AppTest
-
-    at = AppTest.from_file(str(UI / "views" / "document.py"), default_timeout=60)
-    at.session_state["patient_id"] = ui_env
-    at.run()
+    at = _open(ui_env, "document")
     docs = [s for s in at.selectbox if s.label == "Choose a document"][0]
     lab_opt = next(o for o in docs.options if "Lab report" in o)
     docs.select(lab_opt).run()
@@ -65,33 +67,43 @@ def test_document_source_picker_and_summary(ui_env):
 
 
 def test_timeline_shows_reconciliation_and_cards(ui_env):
-    from streamlit.testing.v1 import AppTest
-
-    at = AppTest.from_file(str(UI / "views" / "timeline.py"), default_timeout=60)
-    at.session_state["patient_id"] = ui_env
-    at.run()
+    at = _open(ui_env, "timeline")
     joined = " ".join(m.value for m in at.markdown)
     assert "Current medicines" in joined and "Prescription" in joined and "Lab report" in joined
 
 
 def test_perry_page_chats_and_has_voice_controls(ui_env):
-    from streamlit.testing.v1 import AppTest
-
     from app.config import get_settings
 
     get_settings().perry_mode = "template"
-    at = AppTest.from_file(str(UI / "views" / "perry.py"), default_timeout=60)
-    at.session_state["patient_id"] = ui_env
-    at.run()
+    at = _open(ui_env, "perry")
     assert not at.exception, [e.message for e in at.exception]
-    assert any("What can I help you find" in m.value for m in at.markdown)
-    assert [r.label for r in at.radio] == ["Speech recognition"] and at.toggle[0].value is True
-    next(b for b in at.button if "My medicines" in b.label).click().run()
+    joined = " ".join(m.value for m in at.markdown)
+    assert "Hey there!" in joined and 'class="pv pv-live"' in joined and "Ready when you are!" in joined
+    labels = [b.label for b in at.button]
+    for label in ("Latest Report", "My Medicines", "My Timeline", "Recent Documents", "Pending Confirmations", "Compare Reports"):
+        assert label in labels
+    assert [r.label for r in at.radio] == ["Speech recognition"]
+    assert any(t.label == "Read answers to voice questions aloud" and t.value is True for t in at.toggle)
+    assert any(s.label == "Reply language" for s in at.selectbox)
+    next(b for b in at.button if b.label == "My Medicines").click().run()
     at.run()
     assert not at.exception, [e.message for e in at.exception]
     joined = " ".join(m.value for m in at.markdown)
     assert "Tab Glycomet 500" in joined
+    assert at.session_state["perry_state"] == "explaining"
+    assert 'data-state="explaining"' in joined
     assert any(b.label == "🔊" for b in at.button)
     at.radio[0].set_value("browser").run()
     assert not at.exception, [e.message for e in at.exception]
     assert "Language you will speak" in [s.label for s in at.selectbox]
+
+
+def test_overview_medications_and_fhir_pages(ui_env):
+    at = _open(ui_env, "trends")
+    assert any("Current medicines" in m.value for m in at.markdown)
+    at = _open(ui_env, "medications")
+    assert any("Glycomet" in m.value for m in at.markdown)
+    at = _open(ui_env, "fhir")
+    assert not at.exception, [e.message for e in at.exception]
+    assert any("Bundle" in m.value or "Patient" in m.value for m in at.markdown)

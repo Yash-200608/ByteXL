@@ -3,14 +3,14 @@ import streamlit as st
 import api_client as api
 from common import crop, doc_label, page_image, safe, setup
 
-patient = setup("Confirm details")
+patient = setup("Pending Items")
 if not patient:
     st.stop()
 
 docs = safe(api.get, f"/patients/{patient['_id']}/documents", default=[])
 docs = [d for d in docs if d["status"]["state"] == "done" and d.get("pending_confirmations")]
 if not docs:
-    st.success("Nothing to confirm. Everything has been reviewed. ✅")
+    st.markdown("<div class='p-card p-empty'><b>You're all clear.</b><br>Nothing needs your confirmation right now.</div>", unsafe_allow_html=True)
     st.stop()
 
 st.write("Please check these details against the original. Handwritten medicine names and doses always need a quick check.")

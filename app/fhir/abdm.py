@@ -80,7 +80,7 @@ def to_document_bundle(bundle: dict, document_type: str, title: str | None = Non
         "type": {"coding": [{"system": SNOMED, "code": code, "display": display}], "text": display},
         "date": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "title": title or display,
-        "author": [{"reference": a["fullUrl"]} for a in authors] or [{"display": "ByteXL (patient-uploaded record)"}],
+        "author": [{"reference": a["fullUrl"]} for a in authors] or [{"display": "PERRY (patient-uploaded record)"}],
         "section": _sections(document_type, entries),
     }
     if patient:

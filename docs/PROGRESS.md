@@ -230,3 +230,33 @@ extraction, English LLM summaries), 209 tests passing (`.venv/bin/pytest -q`), r
       - On SAPI-synthesised questions this took 4/4 to correct, where it was 3/4 before ("raziovas" → Rosuvas).
       - The response returns `heard_raw` and `corrections`; the UI shows them under the voice bubble.
     - Tests: 6 more in `tests/test_voice.py`.
+37. PERRY redesign: visible brand, dashboard shell, avatar states.
+    - **Brand:** the user-facing name is now "PERRY — Your Personal Health Assistant". The repo, packages, env vars, API
+      routes and `urn:bytexl:*` FHIR systems keep the ByteXL name.
+    - **Shell:**
+      - `st.navigation` with 8 hidden pages and custom `page_link`s.
+      - The header has the tagline, a records search (sent to PERRY), a notifications popover and the user avatar.
+      - A Settings popover holds the profile switcher.
+      - New Medications and FHIR Record pages; Overview adds a stat row.
+      - The Pending Items nav link gets a count badge.
+      - The theme lives in `ui/theme.py`. Kalam and Baloo 2 are bundled (OFL) and served by Streamlit static serving.
+    - **Avatar:**
+      - User-supplied 3D PERRY art in `ui/static/perry/`. The idle cut-out was made with rembg, run outside the project.
+      - CSS overlays per state; a sci-fi platform and hologram panels.
+      - Three live state cards under the platform swap picture with the state.
+    - **State machine** (`ui/perry_state.py`):
+      - States: idle, listening, thinking, searching, speaking, explaining, celebrating, error.
+      - The server sets the state in session; the browser adds `perry-listening` (mic) and `perry-speaking` (TTS)
+        classes on `body`.
+      - Explaining follows every answer, and celebrating follows an upload.
+    - **API:**
+      - `language` override on `/perry` and `/perry/voice`.
+      - New `POST /perry/transcribe`, `POST /perry/feedback` (`perry_feedback` collection) and
+        `GET /patients/{id}/overview`.
+      - `sources[].document_id` is used for the source-card links.
+    - **Tests:**
+      - UI tests now open pages through `ui/app.py` with `switch_page`; Medications, FHIR and Overview are added.
+      - New `tests/test_perry_avatar.py`.
+      - Result: 300 passed, 1 skipped.
+    - **Known gaps:** mobile and tablet widths and real-microphone checks are not verified yet. The lounge art is not
+      used yet.
