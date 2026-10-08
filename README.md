@@ -14,6 +14,9 @@ Everything runs locally, with no cloud APIs.
 Built for the Altrix Labs "AI-Powered Personal Health Copilot" hackathon. The project began as **ByteXL**, and that is still
 the repository, package and API name; PERRY is the product users see.
 
+**▶ Live demo: https://bytexl-dkbehxqvatgepvl9agprgv.streamlit.app/** (cloud demo mode, with synthetic data; see
+[Live demo and deployment](#live-demo-and-deployment))
+
 ![PERRY answering a question, with the avatar in its Explaining state](docs/screenshots/perry_chat.jpg)
 
 | Medications | Timeline |
@@ -53,7 +56,7 @@ Other commands: `make test` (pytest), `make eval` (field-level accuracy), `make 
 
 PERRY is built to run on the user's own device, so health data never leaves it. That shapes how it is shared:
 
-- **Cloud demo (always on):** hosted free on Streamlit Community Cloud, with the synthetic demo patient pre-loaded.
+- **Cloud demo (always on):** https://bytexl-dkbehxqvatgepvl9agprgv.streamlit.app/, hosted free on Streamlit Community Cloud, with the synthetic demo patient pre-loaded.
   - The entry point is `ui/cloud_app.py`. It starts the API inside the Streamlit process, copies `deploy/demo_data/` in
     on first start, and switches PERRY to its no-GPU fallbacks: rules extraction, template summaries, and the rule-based
     chat router, with all safety checks still applied.
