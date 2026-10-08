@@ -40,6 +40,8 @@ class Settings(BaseSettings):
     medicine_min_score: float = 88.0
     box_match_min_score: float = 80.0
     active_med_default_days: int = 90
+    reconcile_as_of: str = "latest_document"
+    summary_on_upload: bool = True
 
     api_url: str = "http://localhost:8000"
 
