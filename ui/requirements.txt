@@ -1,0 +1,16 @@
+streamlit==1.65.0
+fastapi==0.143.0
+uvicorn==0.54.0
+python-multipart==0.0.32
+pydantic==2.13.5
+pydantic-settings==2.15.0
+pymongo==4.18.2
+httpx==0.28.1
+pymupdf==1.28.2
+opencv-python-headless==5.0.0.93
+numpy==2.3.5
+pillow==12.3.0
+rapidfuzz==3.14.6
+fhir.resources==7.1.0
+pandas==3.0.6
+altair==6.3.0
