@@ -28,4 +28,5 @@ Judging weights: extraction accuracy + summary quality 35 · architecture + ABDM
 
 - *Accuracy?* Show `docs/eval_results.md` — field-level precision/recall per document against ground truth.
 - *What if the model is down?* `/health` shows it; uploads still OCR and fall back to a deterministic reader with every field queued for confirmation.
+- *Does the safety filter ever fire?* Yes — on the seed run the model's first draft said "suggesting possible diabetes"; it was rejected and regenerated as "Fasting blood sugar and HbA1c are high." (`summaries` collection keeps the rejection reasons in `errors`).
 - *Hallucinations?* Any value not found in the OCR text drops to low confidence and goes to the confirm queue.

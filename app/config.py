@@ -43,6 +43,7 @@ class Settings(BaseSettings):
     reconcile_as_of: str = "latest_document"
     summary_on_upload: bool = True
     summary_mode: str = "llm"
+    hindi_summary_mode: str = "template"
 
     api_url: str = "http://localhost:8000"
 

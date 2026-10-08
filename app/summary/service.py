@@ -14,7 +14,7 @@ from app.records import medications_view
 from app.schemas import DischargeSummary, LabReport, Prescription, lab_results, medications
 from app.store import get_repository
 from app.summary.render import FLAG_WORD, how_to_take, to_markdown
-from app.summary.safety import DISCLAIMER, banned_hits, devanagari_ratio, numbers_in, ungrounded_conditions, ungrounded_numbers
+from app.summary.safety import DISCLAIMER, banned_hits, devanagari_ratio, numbers_in, ungrounded_conditions, ungrounded_months, ungrounded_numbers
 
 log = logging.getLogger(__name__)
 ABNORMAL = ("low", "high", "critical")
@@ -164,6 +164,9 @@ def make_checker(data: dict, lang: str):
         missing = [a["name"] for a in data["abnormal_results"] if id(a) not in covered]
         if missing:
             problems.append(f"out_of_range is missing these abnormal results: {missing}")
+        months = ungrounded_months(joined, json.dumps(data, ensure_ascii=False, default=str))
+        if months:
+            problems.append(f"mentions months that do not match the document dates: {months}; use the dates exactly as given")
         general = "\n".join([obj.what_this_is, *obj.key_findings, *obj.questions])
         cond = ungrounded_conditions(general, doc_text, lang)
         for o in obj.out_of_range:
@@ -193,6 +196,12 @@ def template_sections(ex, data: dict, lang: str) -> dict:
         findings = []
         if n_results:
             findings.append(f"{n_results} में से {n_abn} मान सामान्य सीमा से बाहर हैं।")
+            if n_abn:
+                findings.append("सीमा से बाहर: " + ", ".join(f"{a['name']} ({FLAG_WORD['hi'][a['flag']]})" for a in data["abnormal_results"]) + "।")
+            else:
+                findings.append("सभी मान सामान्य सीमा के अंदर हैं।")
+        if meds:
+            findings.append(f"{len(meds)} दवाएं लिखी हैं; हर दवा को लेने का तरीका नीचे वैसे ही दिया गया है जैसा डॉक्टर ने लिखा है।")
         if data.get("diagnoses_as_written"):
             findings.append("डॉक्टर ने लिखा है: " + ", ".join(d for d in data["diagnoses_as_written"] if d) + "।")
         if data.get("follow_up"):
@@ -202,6 +211,7 @@ def template_sections(ex, data: dict, lang: str) -> dict:
             "prescription": ["हर दवा कितने समय तक लेनी है?", "किन दुष्प्रभावों पर ध्यान देना चाहिए?", "क्या ये दवाएं मेरी दूसरी दवाओं के साथ ली जा सकती हैं?"],
             "discharge_summary": ["किन लक्षणों पर मुझे तुरंत अस्पताल आना चाहिए?", "मेरी अगली जांच कब है?", "घर पर खान-पान और आराम कैसे रखना है?"],
         }[ex.document_type]
+        questions = [f"मेरा {a['name']} {FLAG_WORD['hi'][a['flag']]} क्यों है, और क्या इसे दोबारा जांचना चाहिए?" for a in data["abnormal_results"][:2]] + questions
     else:
         if isinstance(ex, LabReport):
             what = f"This is a lab report from {data.get('lab') or 'a laboratory'}" + (f" dated {data['collected_on']}" if data.get("collected_on") else "") + f". It lists {n_results} test results."
@@ -212,6 +222,10 @@ def template_sections(ex, data: dict, lang: str) -> dict:
         findings = []
         if n_results:
             findings.append(f"{n_abn} of {n_results} values are outside the reference range.")
+            if n_abn:
+                findings.append("Outside the range: " + ", ".join(f"{a['name']} ({FLAG_WORD['en'][a['flag']].lower()})" for a in data["abnormal_results"]) + ".")
+        if meds:
+            findings.append(f"{len(meds)} medicines are listed; how to take each one is shown below exactly as written.")
         if data.get("diagnoses_as_written"):
             findings.append("The doctor's note lists: " + ", ".join(d for d in data["diagnoses_as_written"] if d) + ".")
         if data.get("follow_up"):
@@ -221,6 +235,7 @@ def template_sections(ex, data: dict, lang: str) -> dict:
             "prescription": ["How long should I take each medicine?", "Which side effects should I watch for?", "Can these be taken with my other medicines?"],
             "discharge_summary": ["Which warning signs mean I should come back to hospital?", "When is my follow-up visit?", "What should I eat and how much rest do I need at home?"],
         }[ex.document_type]
+        questions = [f"Why is my {a['name']} {FLAG_WORD['en'][a['flag']].lower()}, and should it be rechecked?" for a in data["abnormal_results"][:2]] + questions
     if not findings:
         findings = [what]
     return {"what_this_is": what, "key_findings": findings, "questions": questions, "meanings": {}}
@@ -266,7 +281,7 @@ def generate(doc: dict, ex, lang: str) -> tuple[dict, str, int, list[str]]:
     data = summary_input(ex, lang)
     notes = _notes(doc, ex, lang)
     errors: list[str] = []
-    if s.summary_mode == "template":
+    if s.summary_mode == "template" or (lang == "hi" and s.hindi_summary_mode == "template"):
         return assemble(ex, data, lang, template_sections(ex, data, lang), notes), "template", 0, errors
     try:
         res = get_llm().structured(

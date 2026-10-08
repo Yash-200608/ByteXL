@@ -91,11 +91,23 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
     The synthetic handwriting sample is a clean italic font that both qwen2.5vl:3b and PaddleOCR read as print, so the
     seed marks it via the switch. (A real handwriting font could not be downloaded: GitHub raw fonts returned 403
     from this environment's egress policy.)
-27. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+27. Summary checks extended after reviewing real outputs: hedged-inference patterns (may/might/could + indicate,
+    suggest, affect, pose, show…; "indicating possible"), and month grounding (a month next to a number must match a
+    date in the source; the 7B Hindi draft turned 20 Sep 2024 into "2024 मई 20").
+28. **Deviation — Hindi summaries default to a deterministic Hindi composer** (`HINDI_SUMMARY_MODE=template`): curated
+    Hindi meanings from `lab_tests.csv`, Hindi dosing renderer, per-type Hindi questions, same section structure,
+    medicine/test names and numbers unchanged. Reason: qwen2.5:7b Hindi on this setup transliterated test names,
+    mangled the lab name, translated "liver" as "लिफ्ट" and produced a wrong month. LLM Hindi (with all checks) is one
+    setting away: `HINDI_SUMMARY_MODE=llm`.
+29. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
 
 ## Deviations
 
-- None yet.
+- Vision model default `qwen2.5vl:3b` instead of `qwen2.5vl:7b` (per the >90 s/page rule; see decision 20).
+- Hindi summaries default to the deterministic Hindi composer instead of LLM-generated Hindi (decision 28).
+- FHIR models are `fhir.resources.R4B` (R4-wire-compatible) because pure-R4 classes need Pydantic v1 (decision 3).
+- Samples are synthetic (the repo had none); `samples/expected/` left empty for hand-filling; synthetic ground truth
+  in `tests/fixtures/synthetic_truth/`.
 
 ## Known issues
 

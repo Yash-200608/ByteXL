@@ -22,6 +22,7 @@ def _setup(api, pid_name="Rahul Sharma"):
     from app.config import get_settings
 
     get_settings().summary_on_upload = False
+    get_settings().hindi_summary_mode = "llm"
     pid = api.post("/patients", json={"name": pid_name, "sex": "male"}).json()["_id"]
     lab = api.post(f"/patients/{pid}/documents?sync=true", files={"file": ("lab.pdf", (SAMPLES / "lab_report_2024_03.pdf").read_bytes(), "application/pdf")}).json()
     rx = api.post(f"/patients/{pid}/documents?sync=true", files={"file": ("rx.pdf", text_pdf(RX_PDF_LINES), "application/pdf")}).json()
@@ -210,3 +211,33 @@ def test_inference_phrases_banned():
     assert "may indicate" in banned_hits("This may indicate anaemia")
     assert "suggesting" in banned_hits("suggesting possible diabetes")
     assert banned_hits("This generally indicates a higher average blood sugar") == []
+
+
+def test_wrong_month_rejected(api, fake_llm):
+    _, lab, _ = _setup(api)
+    calls = []
+
+    def handler(model, msgs, sch):
+        calls.append(msgs)
+        return summary_for(msgs, bad="The report is dated May 12, 2024." if len(calls) == 1 else None)
+
+    fake_llm.handler = handler
+    api.get(f"/documents/{lab}/summary?lang=en")
+    assert "months that do not match" in calls[1][-1]["content"]
+
+
+def test_default_hindi_is_curated_without_llm(api, fake_llm):
+    from app.config import get_settings
+
+    _, lab, rx = _setup(api)
+    get_settings().hindi_summary_mode = "template"
+    n = len(fake_llm.calls)
+    s = api.get(f"/documents/{lab}/summary?lang=hi").json()
+    assert len(fake_llm.calls) == n and s["method"] == "template"
+    assert devanagari_ratio(s["what_this_is"]) > 0.4
+    hba1c = next(o for o in s["out_of_range"] if o["name"] == "HbA1c")
+    assert "पिछले 2 से 3 महीनों" in hba1c["meaning"]
+    assert any("HbA1c (अधिक)" in k for k in s["key_findings"])
+    assert banned_hits(_all_text(s), "hi") == []
+    r = api.get(f"/documents/{rx}/summary?lang=hi").json()
+    assert any(m["name"] == "Tab Glycomet 500" for m in r["medicines"])

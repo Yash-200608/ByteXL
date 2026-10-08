@@ -57,6 +57,29 @@ def ungrounded_conditions(text: str, allowed_text: str, lang: str = "en") -> lis
     return out
 
 
+MONTHS_EN = ["january", "february", "march", "april", "may", "june", "july", "august", "september", "october", "november", "december"]
+MONTHS_HI = ["जनवरी", "फ़रवरी", "मार्च", "अप्रैल", "मई", "जून", "जुलाई", "अगस्त", "सितंबर", "अक्टूबर", "नवंबर", "दिसंबर"]
+MONTHS_HI_ALT = {"फरवरी": 2, "सितम्बर": 9, "नवम्बर": 11, "दिसम्बर": 12}
+ISO_DATE = re.compile(r"\b\d{4}-(\d{2})-\d{2}\b")
+
+
+def ungrounded_months(text: str, source: str) -> list[str]:
+    allowed = {int(m) for m in ISO_DATE.findall(source or "")}
+    low = (text or "").lower()
+    out = []
+    for i, name in enumerate(MONTHS_EN, 1):
+        near_number = rf"(\d{{1,2}}(st|nd|rd|th)?\s+(of\s+)?{name}(?![a-z])|(?<![a-z]){name}\s+\d{{1,4}})"
+        if re.search(near_number, low) and i not in allowed:
+            out.append(name)
+    for i, name in enumerate(MONTHS_HI, 1):
+        if name in (text or "") and i not in allowed:
+            out.append(name)
+    for name, i in MONTHS_HI_ALT.items():
+        if name in (text or "") and i not in allowed:
+            out.append(name)
+    return out
+
+
 NUMBER_RE = re.compile(r"(?<![\w.])\d+(?:[.,]\d+)?")
 
 
@@ -71,8 +94,15 @@ def _pattern(phrase: str) -> re.Pattern:
 _COMPILED = {lang: [(p, _pattern(p)) for p in phrases] for lang, phrases in BANNED.items()}
 
 
+HEDGED_INFERENCE = re.compile(
+    r"\b(may|might|could|can)\s+(also\s+)?(indicate|suggest|signal|point to|mean you|affect|pose|show|lead to|cause|reflect a|be a sign)\b"
+    r"|\bindicating\s+(possible|potential|a possible|a potential)\b|\bpose[s]?\s+(a\s+)?risks?\b|\bpossible\s+(issues?|problems?|conditions?)\b",
+    re.I,
+)
+
+
 def banned_hits(text: str, lang: str = "en") -> list[str]:
-    hits = []
+    hits = [m.group(0).lower() for m in HEDGED_INFERENCE.finditer(text or "")]
     langs = ["en", "hi"] if lang == "hi" else ["en"]
     for lg in langs:
         for phrase, pat in _COMPILED[lg]:
