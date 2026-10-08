@@ -7,7 +7,7 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 | Phase | Status | Commit |
 |---|---|---|
 | 1 Architecture | done | phase 1 |
-| 2 Scaffold | pending | |
+| 2 Scaffold | done | phase 2 |
 | 3 Ingest & OCR | pending | |
 | 4 Extraction | pending | |
 | 5 Normalization | pending | |
@@ -36,7 +36,10 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
    R4 profile URLs.
 4. The LLM fills a flat LLM-facing schema; confidence and source boxes are computed deterministically afterwards.
 5. Summary medicine instructions, values, flags and disclaimer are injected by code; the LLM writes prose only.
-6. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+6. Store selection: `STORE_BACKEND=auto` tries Mongo (1.5 s timeout) and falls back to `data/store/*.json`.
+7. LLM access goes through `app/llm/client.py` (`OllamaClient.structured`): JSON-schema-constrained output, Pydantic
+   validation, one retry with the errors fed back. Tests inject a `FakeLLM` via `set_llm`.
+8. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
 
 ## Deviations
 
@@ -48,4 +51,4 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 
 ## Next step
 
-Phase 2 — scaffold.
+Phase 3 — ingest & OCR.
