@@ -32,6 +32,8 @@ def health():
             "vision_fallback_available": _has(installed, s.vision_fallback_model),
             "text": s.text_model,
             "text_available": _has(installed, s.text_model),
+            "translate": s.translate_model,
+            "translate_available": _has(installed, s.translate_model),
             "installed": installed,
         },
         "ocr": {"paddleocr": importlib.util.find_spec("paddleocr") is not None, "pymupdf": importlib.util.find_spec("pymupdf") is not None},

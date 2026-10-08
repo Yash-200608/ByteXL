@@ -6,9 +6,10 @@ from typing import Literal
 
 from pydantic import BaseModel, Field
 
-from app.agent.language import Language, detect_language, reply_instruction
+from app.agent.language import ENGLISH, Language, detect_language, reply_instruction
 from app.agent.prompts import ANSWER, GENERAL, PLANNER, SYSTEM
 from app.agent.tools import STOPWORDS, TEST_SYNONYMS, TOOLS, PerryTools, ToolError
+from app.agent.translate import from_english, target_name, to_english
 from app.config import get_settings
 from app.llm.client import LLMUnavailable, get_llm
 from app.normalize.labs import resolve_lab
@@ -116,6 +117,26 @@ def _detect_test(text: str) -> str | None:
     return None
 
 
+REGIONAL = {
+    "medications": ["दवा", "दवाई", "औषध", "ওষুধ", "ঔষধ", "మందు", "மருந்து", "દવા", "دوا", "ದವಾ", "ಔಷಧ", "ଔଷଧ", "മരുന്ന", "ਦਵਾਈ", "ਦਵਾ"],
+    "compare": ["बदल", "परिवर्तन", "পরিবর্তন", "బదల", "మార్పు", "மாற்ற", "ફેરફાર", "બદલ", "تبدیل", "ಬದಲ", "ପରିବର୍ତ୍ତନ", "ବଦଳ", "മാറ്റ", "ਬਦਲ"],
+    "pending": ["पुष्टि", "पुष्टी", "নিশ্চিত", "నిర్ధార", "உறுதி", "પુષ્ટિ", "تصدیق", "ದೃಢ", "ନିଶ୍ଚିତ", "സ്ഥിരീകര", "ਪੁਸ਼ਟੀ"],
+    "labs": ["जांच", "चाचणी", "পরীক্ষা", "పరీక్ష", "பரிசோதனை", "சோதனை", "તપાસ", "ٹیسٹ", "ಪರೀಕ್ಷೆ", "ପରୀକ୍ଷା", "പരിശോധന", "ਟੈਸਟ", "ਜਾਂਚ"],
+    "documents": ["रिपोर्ट", "अहवाल", "রিপোর্ট", "প্রতিবেদন", "నివేదిక", "రిపోర్ట", "அறிக்கை", "ரிப்போர்ட", "રિપોર્ટ", "અહેવાલ", "رپورٹ",
+                  "ವರದಿ", "ರಿಪೋರ್ಟ", "ରିପୋର୍ଟ", "ବିବରଣୀ", "റിപ്പോർട്ട", "റിപ്പോര്ട്ട", "ਰਿਪੋਰਟ", "दस्तावेज़", "दस्तऐवज"],
+}
+REGIONAL_TOOLS = {"medications": ("get_my_medications", {}), "compare": ("compare_my_reports", {}), "pending": ("get_pending_confirmations", {}),
+                  "labs": ("get_my_labs", {"limit": 10}), "documents": ("get_my_documents", {"limit": 8})}
+
+
+def _regional_intent(message: str) -> tuple[str, list[tuple[str, dict]]] | None:
+    for intent, words in REGIONAL.items():
+        if any(w in message for w in words):
+            name, args = REGIONAL_TOOLS[intent]
+            return intent, [(name, dict(args))]
+    return None
+
+
 def route(message: str, lang: Language) -> tuple[str, list[tuple[str, dict]]]:
     m = message.lower().strip()
     has = lambda *words: any(re.search(rf"(?<![\w]){w}", m) for w in words)
@@ -157,6 +178,9 @@ def route(message: str, lang: Language) -> tuple[str, list[tuple[str, dict]]]:
         return "document", [("get_my_document", {"document_id": "latest"})]
     if has("my name", "profile", "abha", "my age", "who am i", "mera naam", "मेरा नाम"):
         return "profile", [("get_my_profile", {})]
+    regional = _regional_intent(message)
+    if regional:
+        return regional
     return "search", [("search_my_records", {"query": message.strip()[:200]})]
 
 
@@ -199,6 +223,32 @@ class Perry:
         message = (message or "").strip()[:1000]
         history = (history or [])[-self.settings.perry_history_turns * 2:]
         lang = detect_language(message)
+        if not self._translates(lang):
+            return self._respond(message, history, lang)
+        english = to_english(message, lang) if self.settings.perry_indic_mode == "translate" else None
+        reply = self._respond(english or message, history, ENGLISH)
+        if self.settings.perry_indic_mode == "translate":
+            text, quality = from_english(reply.reply, lang)
+        else:
+            text, quality = reply.reply, 0.0
+        name = target_name(lang)
+        if quality == 0.0:
+            text += f"\n\n_(I couldn't answer in {name} right now, so here it is in English.)_"
+        elif quality < 1.0:
+            text += "\n\n_(Some lines are kept in English so that values and names stay exact.)_"
+        reply.reply = text
+        reply.language = lang
+        reply.method = f"{reply.method}+translated" if quality > 0 else reply.method
+        return reply
+
+    def _translates(self, lang: Language) -> bool:
+        if lang.code in ("en", "hinglish") or self.settings.perry_indic_mode == "llm":
+            return False
+        if lang.code == "hi":
+            return self.settings.perry_hindi_mode == "translate"
+        return True
+
+    def _respond(self, message: str, history: list[dict], lang: Language) -> PerryReply:
         intent, routed = route(message, lang)
         errors: list[str] = []
         use_llm = self.settings.perry_mode == "llm"

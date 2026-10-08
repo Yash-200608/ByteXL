@@ -459,7 +459,7 @@ class PerryTools:
     def search_my_records(self, query: str) -> dict:
         words = re.findall(r"[\w%.\-]+", query.lower())
         recency = any(w in RECENCY_WORDS for w in words)
-        tokens = [w for w in words if w not in STOPWORDS and len(w) >= 2]
+        tokens = [w for w in words if w not in STOPWORDS and len(w) >= 2 and (re.search(r"[a-z0-9]", w) or w in TEST_SYNONYMS)]
         expanded = []
         for t in tokens:
             expanded.append(t)

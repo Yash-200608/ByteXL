@@ -200,7 +200,7 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self):
         if self.path.startswith("/api/tags"):
             s = get_settings()
-            names = sorted({s.vision_model, s.vision_fallback_model, s.text_model, MOCK_TAG})
+            names = sorted({s.vision_model, s.vision_fallback_model, s.text_model, s.translate_model, MOCK_TAG})
             self._send(200, {"models": [{"name": n, "model": n} for n in names]})
         elif self.path in ("/", "/api/version"):
             self._send(200, {"version": "mock"})

@@ -22,7 +22,8 @@ THINKING = {
     "hinglish": "PERRY aapke records dekh raha hai",
 }
 LANG_BADGE = {"hi": "हिंदी", "hinglish": "Hinglish", "ta": "தமிழ்", "te": "తెలుగు", "bn": "বাংলা", "mr": "मराठी", "gu": "ગુજરાતી",
-              "kn": "ಕನ್ನಡ", "ml": "മലയാളം", "pa": "ਪੰਜਾਬੀ", "or": "ଓଡ଼ିଆ"}
+              "kn": "ಕನ್ನಡ", "ml": "മലയാളം", "pa": "ਪੰਜਾਬੀ", "or": "ଓଡ଼ିଆ", "ur": "اردو"}
+LANGUAGE_STRIP = "English · हिंदी · Hinglish · বাংলা · मराठी · తెలుగు · தமிழ் · ગુજરાતી · اردو · ಕನ್ನಡ · ଓଡ଼ିଆ · മലയാളം"
 
 
 def _lang(text: str) -> str:
@@ -132,10 +133,11 @@ for n, (label, prompt) in enumerate(QUICK_ACTIONS):
             _ask(pid, prompt)
             st.rerun()
 
-st.markdown('<div class="perry-foot">PERRY explains what is in your records. It is not a doctor and never changes your medicines.</div>',
+st.markdown(f'<div class="perry-langs">🌐 {LANGUAGE_STRIP}</div>'
+            '<div class="perry-foot">PERRY explains what is in your records. It is not a doctor and never changes your medicines.</div>',
             unsafe_allow_html=True)
 
-text = st.chat_input("Ask PERRY anything about your records… (English, हिंदी, Hinglish)")
+text = st.chat_input("Ask PERRY anything about your records — in your language")
 if text and text.strip():
     _ask(pid, text)
     st.rerun()

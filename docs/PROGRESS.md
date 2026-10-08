@@ -156,6 +156,21 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
     - Voice is not built (P2).
     - The mascot is an original SVG with CSS states for idle, thinking and error.
     - Tests: 45 in `tests/test_perry.py`.
+34. PERRY in the top 10 Indian languages via local Sarvam-Translate (`app/agent/translate.py`).
+    - Choices:
+      - AI4Bharat IndicTrans2 was rejected: gated on Hugging Face, and it would add torch, transformers and
+        IndicTransToolkit.
+      - The Sarvam cloud API was rejected: paid key, and data would leave the device.
+      - Sarvam-Translate is ungated (GPL-3.0) and runs through the existing Ollama client from a community GGUF
+        (`hf.co/fischerman/sarvam-translate-gguf:Q4_K_S`). Its quality is unverified here because this PC has no Ollama;
+        test it on the presentation laptop.
+    - Pipeline: translate the input to English, run the normal pipeline in English, translate the output back.
+    - Protected spans become `[[n]]` placeholders. An answer is accepted only if every placeholder returns exactly once,
+      no stray digits appear and the line is mostly in the target script. Otherwise each line is translated separately,
+      and any line that still fails stays in English.
+    - Marathi is told from Hindi by marker words; Urdu is detected by Perso-Arabic script.
+    - Tests: 15 more in `tests/test_perry.py`, including a translator that tampers with values (values stay exact) and an
+      offline translator (English plus a note).
 
 ## Deviations
 

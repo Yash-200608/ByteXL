@@ -76,7 +76,10 @@ CSS = """
 
 div[class*="st-key-pmsg-user"] {margin-left:auto; max-width:78%; padding:10px 16px !important; border-radius:18px 18px 4px 18px;
   background: linear-gradient(135deg,#0ea5e9,#6366f1); color:#fff; animation: perryIn .3s ease-out;}
-div[class*="st-key-pmsg-user"] p {color:#fff; margin:0;}
+div[class*="st-key-pmsg-user"] p {color:#fff; margin:0; padding:2px 0;}
+div[class*="st-key-pmsg"], div[class*="st-key-pmsg"] * {overflow: visible !important;}
+div[class*="st-key-pmsg"] p, div[class*="st-key-pmsg"] li {line-height: 1.75;}
+div[class*="st-key-pmsg"] [data-testid="stMarkdownContainer"] {margin-bottom: 0 !important;}
 div[class*="st-key-pmsg-perry"] {max-width:92%; padding:12px 16px !important; border-radius:18px 18px 18px 4px;
   background: rgba(20,184,166,.08); border:1px solid rgba(20,184,166,.28); animation: perryIn .35s ease-out;}
 div[class*="st-key-pmsg-perry-error"] {background: rgba(239,68,68,.07); border-color: rgba(239,68,68,.35);}
@@ -96,6 +99,8 @@ div[class*="st-key-qa-"] button p {font-size:.86rem !important;}
 [data-testid="stChatInput"] {border-radius: 22px !important; border: 1.5px solid rgba(20,184,166,.55) !important;
   box-shadow: 0 6px 24px rgba(14,165,233,.12);}
 .perry-foot {text-align:center; font-size:.75rem; opacity:.55; margin-top:6px;}
+.perry-langs {text-align:center; font-size:.8rem; opacity:.75; margin-top:12px; line-height:1.7;}
+div[class*="st-key-pmsg"] p, div[class*="st-key-pmsg"] li {unicode-bidi: plaintext; text-align: start;}
 @media (max-width: 640px) {.perry-name{font-size:2.3rem} div[class*="st-key-pmsg-user"]{max-width:92%}
   [data-testid="stMainBlockContainer"] {padding-top: 4.2rem !important;}}
 </style>

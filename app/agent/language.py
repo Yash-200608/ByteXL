@@ -1,17 +1,23 @@
 import re
 from dataclasses import dataclass
 
-SCRIPTS = {
-    "hi": ("Hindi", (0x0900, 0x097F)),
-    "bn": ("Bengali", (0x0980, 0x09FF)),
-    "pa": ("Punjabi", (0x0A00, 0x0A7F)),
-    "gu": ("Gujarati", (0x0A80, 0x0AFF)),
-    "or": ("Odia", (0x0B00, 0x0B7F)),
-    "ta": ("Tamil", (0x0B80, 0x0BFF)),
-    "te": ("Telugu", (0x0C00, 0x0C7F)),
-    "kn": ("Kannada", (0x0C80, 0x0CFF)),
-    "ml": ("Malayalam", (0x0D00, 0x0D7F)),
+LANGUAGES = {
+    "hi": ("Hindi", "Devanagari", (0x0900, 0x097F)),
+    "mr": ("Marathi", "Devanagari", (0x0900, 0x097F)),
+    "bn": ("Bengali", "Bengali", (0x0980, 0x09FF)),
+    "pa": ("Punjabi", "Gurmukhi", (0x0A00, 0x0A7F)),
+    "gu": ("Gujarati", "Gujarati", (0x0A80, 0x0AFF)),
+    "or": ("Odia", "Odia", (0x0B00, 0x0B7F)),
+    "ta": ("Tamil", "Tamil", (0x0B80, 0x0BFF)),
+    "te": ("Telugu", "Telugu", (0x0C00, 0x0C7F)),
+    "kn": ("Kannada", "Kannada", (0x0C80, 0x0CFF)),
+    "ml": ("Malayalam", "Malayalam", (0x0D00, 0x0D7F)),
+    "ur": ("Urdu", "Perso-Arabic", (0x0600, 0x06FF)),
 }
+SCRIPTS = {code: (name, rng) for code, (name, _, rng) in LANGUAGES.items()}
+SCRIPT_DEFAULT = {"Devanagari": "hi"}
+MARATHI_MARKERS = {"आहे", "आहेत", "माझे", "माझी", "माझा", "माझ्या", "मला", "दाखवा", "सांगा", "झाले", "कोणते", "कोणती", "औषधे", "काय"}
+HINDI_MARKERS = {"है", "हैं", "मेरी", "मेरा", "मेरे", "मुझे", "दिखाओ", "बताओ", "क्या", "समझाओ", "दवाइयां", "दवाएं"}
 
 HINGLISH_MARKERS = {
     "meri", "mera", "mere", "mujhe", "mujhko", "hamara", "hamari", "kya", "kyaa", "hai", "hain", "tha", "thi", "kaise",
@@ -63,7 +69,12 @@ def detect_language(text: str) -> Language:
     if indic:
         code = max(indic, key=indic.get)
         if indic[code] >= max(2, counts["latin"] * 0.25):
-            return Language(code, SCRIPTS[code][0], SCRIPTS[code][0])
+            if code == "hi":
+                tokens = set(re.findall(r"[ऀ-ॿ]+", text))
+                if len(tokens & MARATHI_MARKERS) > len(tokens & HINDI_MARKERS):
+                    code = "mr"
+            name, script, _ = LANGUAGES[code]
+            return Language(code, name, script)
     words = re.findall(r"[a-z]+", (text or "").lower())
     if not words:
         return ENGLISH

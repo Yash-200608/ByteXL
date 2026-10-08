@@ -13,6 +13,7 @@ git clone https://github.com/Yash-200608/ByteXL.git && cd ByteXL
 python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
 cp .env.example .env
 ollama pull qwen2.5vl:3b && ollama pull qwen2.5:7b
+ollama pull hf.co/fischerman/sarvam-translate-gguf:Q4_K_S   # PERRY in 10+ Indian languages (optional, ~2.4 GB)
 docker compose up -d mongo            # optional
 make seed                             # demo patient + all files in samples/ (slow on CPU-only machines)
 make api                              # terminal 1 → http://localhost:8000/docs
@@ -83,6 +84,20 @@ prescribed most recently?". It lives in `app/agent/` and reuses ByteXL's existin
 - **Safety net:** if the model is unavailable or keeps failing the checks, a rule-based router and a fixed-phrase composer answer from the
   same tools in English, Hindi or Hinglish. Questions like "should I stop this medicine?" always get the fixed reply: it shows the
   medicine exactly as written and refers the decision to the doctor.
+- **Indian languages:** PERRY understands and answers in Hindi, Bengali, Marathi, Telugu, Tamil, Gujarati, Urdu,
+  Kannada, Odia and Malayalam, plus Punjabi, English and Hinglish. Detection uses Unicode scripts and marker words; Marathi and
+  Hindi are told apart by common words, and Urdu by Perso-Arabic script.
+  - Translation runs locally with **Sarvam-Translate** (Sarvam AI, fine-tuned from Gemma 3 4B for 22 Indian languages,
+    GPL-3.0), using a community GGUF build pulled through Ollama. There is no API key or extra Python package, and data stays
+    on the device.
+  - The question is translated to English, PERRY's normal grounded pipeline runs in English, and the checked answer is
+    translated back.
+  - Numbers, units, dates, medicine names, dose codes such as `1-0-1` or `BD`, lab test names and filenames are replaced
+    with placeholders before translation. A line whose placeholders or digits come back changed, or that isn't in the target
+    script, stays in English.
+  - If the translator isn't installed, PERRY answers in English with a one-line note.
+  - Model: `TRANSLATE_MODEL`. `PERRY_INDIC_MODE=translate|llm|english`; `llm` asks the text model to reply directly.
+    `PERRY_HINDI_MODE=translate` uses the translator for Hindi too.
 - **Settings:** `PERRY_MODE=llm|template`; `PERRY_HINDI_MODE=template|llm` controls Devanagari replies (template by default, for the same
   reason as the summaries).
 - **API:** `POST /patients/{id}/perry` with `{"message": "...", "history": [...]}`. The patient in the path stands in for the logged-in

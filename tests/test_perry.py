@@ -293,3 +293,106 @@ def test_api_endpoint(world):
     assert c.post(f"/patients/{world['a']}/perry", json={"message": "x", "history": [{"role": "system", "content": "x"}]}).status_code == 422
     r = c.post(f"/patients/{world['b']}/perry", json={"message": "What medicines are in my records?"}).json()
     assert "Tab Montair LC" in r["reply"] and "Glycomet" not in r["reply"]
+
+
+@pytest.mark.parametrize("text, code", [
+    ("माझी औषधे दाखवा", "mr"),
+    ("माझा शेवटचा रिपोर्ट काय आहे?", "mr"),
+    ("میری دوائیں دکھائیں", "ur"),
+    ("મારી દવાઓ બતાવો", "gu"),
+    ("ನನ್ನ ಔಷಧಿಗಳನ್ನು ತೋರಿಸಿ", "kn"),
+    ("എന്റെ മരുന്നുകൾ കാണിക്കൂ", "ml"),
+    ("ମୋର ଔଷଧ ଦେଖାନ୍ତୁ", "or"),
+    ("ਮੇਰੀਆਂ ਦਵਾਈਆਂ ਦਿਖਾਓ", "pa"),
+    ("मेरी दवाइयां दिखाओ", "hi"),
+])
+def test_top_indian_languages_detected(text, code):
+    assert detect_language(text).code == code
+
+
+SCRIPT_WORD = {"Tamil": "மருந்து", "Marathi": "औषध", "Urdu": "دوائی", "Bengali": "ওষুধ", "Telugu": "మందు"}
+
+
+def _translator(world, english_for: dict, tamper: bool = False, down: bool = False):
+    import re as _re
+
+    from app.llm.client import LLMUnavailable
+
+    calls = []
+
+    def handler(model, messages, schema):
+        system = messages[0]["content"]
+        if not system.startswith("Translate the text below to "):
+            return "{}"
+        calls.append(model)
+        if down:
+            raise LLMUnavailable("translator offline")
+        target = system.removeprefix("Translate the text below to ").rstrip(".")
+        text = messages[1]["content"]
+        if target == "English":
+            return english_for.get(text, "")
+        out = _re.sub(r"[A-Za-z][A-Za-z'’\-]*", SCRIPT_WORD[target], text)
+        if tamper:
+            out = out.replace("[[1]]", "9.1", 1)
+        return out
+
+    world["llm"].handler = handler
+    return calls
+
+
+def test_tamil_question_answered_in_tamil_with_exact_values(world):
+    calls = _translator(world, {"என் கடைசி HbA1c என்ன?": "What was my latest HbA1c?"})
+    r = _ask(world, "என் கடைசி HbA1c என்ன?")
+    assert r["language"] == "ta" and r["method"] == "composed+translated" and r["tools"] == ["get_my_labs"]
+    assert "மருந்து" in r["reply"] and "**HbA1c**" in r["reply"] and "**6.6%**" in r["reply"] and "20 Sep 2024" in r["reply"]
+    assert "couldn't answer" not in r["reply"]
+    assert set(calls) == {world["settings"].translate_model}
+
+
+def test_marathi_medicines_keep_names_and_doses(world):
+    _translator(world, {"माझी औषधे दाखवा": "Show my medicines"})
+    r = _ask(world, "माझी औषधे दाखवा")
+    assert r["language"] == "mr" and r["intent"] == "medications"
+    assert "Tab Glycomet 500" in r["reply"] and "BD" in r["reply"] and "PC" in r["reply"] and "औषध" in r["reply"]
+
+
+def test_urdu_treatment_question_stays_safe(world):
+    _translator(world, {"کیا میں Glycomet بند کر دوں؟": "Should I stop taking Glycomet?"})
+    r = _ask(world, "کیا میں Glycomet بند کر دوں؟")
+    assert r["language"] == "ur" and r["intent"] == "treatment"
+    assert "Tab Glycomet 500" in r["reply"] and "BD" in r["reply"] and "should stop" not in r["reply"].lower()
+
+
+def test_tampered_translation_never_changes_values(world):
+    _translator(world, {"আমার শেষ HbA1c কত?": "What was my latest HbA1c?"}, tamper=True)
+    r = _ask(world, "আমার শেষ HbA1c কত?")
+    assert r["language"] == "bn" and "9.1" not in r["reply"] and "**6.6%**" in r["reply"]
+    assert "kept in English" in r["reply"] or "couldn't answer in Bengali" in r["reply"]
+
+
+def test_translator_offline_falls_back_to_english(world):
+    _translator(world, {}, down=True)
+    r = _ask(world, "నా మందులు చూపించు")
+    assert r["language"] == "te" and "couldn't answer in Telugu" in r["reply"]
+    assert r["intent"] == "medications" and "Tab Glycomet 500" in r["reply"]
+
+
+def test_english_and_hinglish_never_call_translator(world):
+    calls = _translator(world, {})
+    _ask(world, "What was my latest HbA1c?")
+    _ask(world, "Meri latest HbA1c kya hai?")
+    assert calls == []
+
+
+@pytest.mark.parametrize("text, intent", [
+    ("ನನ್ನ ವರದಿಗಳನ್ನು ನನಗೆ ಕೊಡಿ.", "documents"),
+    ("என் மருந்துகளை காட்டு", "medications"),
+    ("আমার রিপোর্টে কী পরিবর্তন হয়েছে?", "compare"),
+    ("నా పరీక్ష ఫలితాలు చూపించు", "labs"),
+    ("میری دوائیں دکھائیں", "medications"),
+])
+def test_regional_keywords_route_without_translator(world, text, intent):
+    _translator(world, {}, down=True)
+    r = _ask(world, text)
+    assert r["intent"] == intent and r["state"] == "ok"
+    assert "couldn't answer in" in r["reply"] and "couldn't find" not in r["reply"]

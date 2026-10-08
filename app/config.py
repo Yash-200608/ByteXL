@@ -47,6 +47,8 @@ class Settings(BaseSettings):
     perry_max_tool_calls: int = 3
     perry_history_turns: int = 6
     perry_result_chars: int = 6000
+    perry_indic_mode: str = "translate"
+    translate_model: str = "hf.co/fischerman/sarvam-translate-gguf:Q4_K_S"
     summary_mode: str = "llm"
     hindi_summary_mode: str = "template"
 
