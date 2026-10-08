@@ -41,6 +41,23 @@ def encode_image(image: Image.Image, max_side: int) -> str:
     return base64.b64encode(buf.getvalue()).decode()
 
 
+def strict_schema(schema: dict) -> dict:
+    def walk(node):
+        if isinstance(node, dict):
+            if node.get("type") == "object" and "properties" in node:
+                node["required"] = list(node["properties"].keys())
+                for prop in node["properties"].values():
+                    prop.pop("default", None)
+            for v in node.values():
+                walk(v)
+        elif isinstance(node, list):
+            for v in node:
+                walk(v)
+        return node
+
+    return walk(schema)
+
+
 def _short_errors(exc: ValidationError) -> list[str]:
     return [f"{'.'.join(str(p) for p in e['loc'])}: {e['msg']}" for e in exc.errors()[:12]]
 
@@ -94,7 +111,7 @@ class OllamaClient:
         if images:
             user_msg["images"] = [encode_image(im, self.settings.vision_max_side) for im in images]
         messages = [{"role": "system", "content": system}, user_msg]
-        schema = schema_model.model_json_schema()
+        schema = strict_schema(schema_model.model_json_schema())
         errors: list[str] = []
         raw = ""
         for attempt in (1, 2):

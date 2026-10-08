@@ -1,0 +1,15 @@
+Extract this DISCHARGE SUMMARY into JSON.
+Rules:
+- "diagnoses" from Final Diagnosis / Diagnosis, one item per diagnosis, as written (drop numbering).
+- "investigations": one entry per lab test row with a result, values exactly as printed.
+- "discharge_medicines": medicines on discharge. "name" is ONLY the form word, medicine name and strength (e.g. "Tab Ondem 4 mg"); "dosage" the frequency as written (e.g. TDS, 1-0-1, SOS); "timing" the food/time instruction; "duration" as written (e.g. x 3 days, continue). Never put frequency or duration in "name".
+- "strength" exactly as written; do not add units that are not written.
+- Dates exactly as printed.
+
+Example output for a different summary:
+{"patient_name": "Anita Desai", "age": "34 Y", "sex": "F", "patient_id": "IP-9921", "hospital": "Lotus Hospital", "doctor": "Dr. R. Menon", "admission_date": "10/04/2024", "discharge_date": "13/04/2024", "diagnoses": ["Dengue fever"], "presenting_complaints": ["fever for 4 days"], "hospital_course": "Managed with IV fluids. Platelets improved.", "procedures": [], "investigations": [{"name": "Platelet count", "value": "85000", "unit": "/cumm", "reference_range": "150000 - 450000", "flag": "L"}], "discharge_medicines": [{"name": "Tab Dolo 650", "strength": "650", "dosage": "SOS", "timing": "", "duration": "x 3 days", "instructions": "for fever"}], "follow_up": "after 3 days with CBC", "advice": ["oral fluids"]}
+
+OCR text of the page (may contain errors):
+<<<
+{ocr_text}
+>>>

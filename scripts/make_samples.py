@@ -303,6 +303,106 @@ def main():
     render_image(prescription_handwritten(), handwritten=True, seed=11).save(OUT / "prescription_handwritten_2024_09.png")
     image_to_pdf(render_image(discharge_summary()).convert("L").convert("RGB"), OUT / "discharge_summary_2024_06.pdf")
     print("\n".join(sorted(p.name for p in OUT.iterdir() if p.is_file())))
+    write_truth()
+
+
+
+PATIENT = {"name": "Rahul Sharma", "age_years": 45, "sex": "male"}
+
+
+def _lab(name, value, unit, rng, text=""):
+    return {"test_name": name, "value": value, "value_text": text, "unit": unit, "reference_range": rng}
+
+
+def _med(name, strength, dosage, timing, duration):
+    return {"name": name, "strength": strength, "dosage": dosage, "timing": timing, "duration": duration}
+
+
+TRUTH = {
+    "lab_report_2024_03": {
+        "document_type": "lab_report", "patient": PATIENT, "facility": "SUNRISE DIAGNOSTICS PVT. LTD.",
+        "referring_doctor": "Dr. Anjali Mehta, MD", "pathologist": "Dr. Sameer Kulkarni, MD (Pathology)",
+        "collected_on": "2024-03-12", "reported_on": "2024-03-12",
+        "results": [
+            _lab("Haemoglobin", 12.1, "g/dL", "13.0 - 17.0"), _lab("Total Leucocyte Count", 7800, "/cumm", "4000 - 11000"),
+            _lab("Platelet Count", 2.4, "lakh/cumm", "1.5 - 4.5"), _lab("RBC Count", 4.6, "mill/cumm", "4.5 - 5.5"),
+            _lab("PCV", 38.5, "%", "40 - 50"), _lab("Fasting Blood Sugar", 138, "mg/dL", "70 - 100"),
+            _lab("HbA1c", 7.2, "%", "4.0 - 5.6"), _lab("Serum Creatinine", 0.9, "mg/dL", "0.7 - 1.3"),
+            _lab("Total Cholesterol", 232, "mg/dL", "< 200"), _lab("Triglycerides", 190, "mg/dL", "< 150"),
+            _lab("HDL Cholesterol", 38, "mg/dL", "> 40"), _lab("LDL Cholesterol", 156, "mg/dL", "< 100"),
+        ],
+    },
+    "lab_report_2024_09": {
+        "document_type": "lab_report", "patient": PATIENT, "facility": "SUNRISE DIAGNOSTICS PVT. LTD.",
+        "referring_doctor": "Dr. Anjali Mehta, MD", "pathologist": "Dr. Sameer Kulkarni, MD (Pathology)",
+        "collected_on": "2024-09-20", "reported_on": "2024-09-20",
+        "results": [
+            _lab("Fasting Blood Sugar", 118, "mg/dL", "70 - 100"), _lab("HbA1c", 6.6, "%", "4.0 - 5.6"),
+            _lab("SGPT (ALT)", 42, "U/L", "0 - 41"), _lab("Serum Creatinine", 1.0, "mg/dL", "0.7 - 1.3"),
+            _lab("Total Cholesterol", 198, "mg/dL", "< 200"), _lab("LDL Cholesterol", 124, "mg/dL", "< 100"),
+            _lab("HDL Cholesterol", 41, "mg/dL", "> 40"), _lab("TSH", 5.8, "uIU/mL", "0.4 - 4.5"),
+            _lab("Vitamin D (25-OH)", 18, "ng/mL", "30 - 100"), _lab("Vitamin B12", 210, "pg/mL", "211 - 911"),
+        ],
+    },
+    "prescription_printed_2024_03": {
+        "document_type": "prescription", "patient": PATIENT, "prescriber": "Dr. Anjali Mehta",
+        "prescriber_registration": "MMC 2009/03/5678", "facility": "Mehta Family Clinic", "date": "2024-03-15",
+        "complaints": ["Routine follow-up, fatigue"], "diagnoses": ["Type 2 Diabetes Mellitus", "Dyslipidemia"],
+        "medications": [
+            _med("Tab Glycomet 500 mg", "500 mg", "1-0-1", "after food", "x 30 days"),
+            _med("Tab Atorva 10 mg", "10 mg", "0-0-1", "at bedtime", "x 30 days"),
+            _med("Tab Telma 40 mg", "40 mg", "1-0-0", "before breakfast", "x 30 days"),
+            _med("Cap Uprise-D3 60K", "60K", "once a week", "after food", "x 8 weeks"),
+            _med("Tab Pan 40 mg", "40 mg", "OD", "AC", "x 14 days"),
+        ],
+        "advice": ["Low sugar, low fat diet. Brisk walk 30 min daily."],
+        "follow_up": "after 6 months with FBS, HbA1c, Lipid profile, TSH, Vit D",
+    },
+    "prescription_handwritten_2024_09": {
+        "document_type": "prescription", "patient": PATIENT, "prescriber": "Dr. Anjali Mehta",
+        "prescriber_registration": "MMC 2009/03/5678", "facility": "Mehta Family Clinic", "date": "2024-09-22",
+        "complaints": ["fever x 2 days, body ache"], "diagnoses": ["Viral fever", "Subclinical hypothyroidism"],
+        "medications": [
+            _med("Tab Dolo 650", "650", "SOS", "", "x 3 days"),
+            _med("Tab Thyronorm 25 mcg", "25 mcg", "OD", "empty stomach", "x 6 wks"),
+            _med("Tab Glycomet 500", "500", "BD", "PC", "x 1 month"),
+            _med("Tab Rosuvas 10", "10", "HS", "", "x 1 month"),
+            _med("Tab Ecosprin 75", "75", "0-1-0", "PC", ""),
+        ],
+        "advice": ["Plenty of oral fluids."], "follow_up": "after 6 wks with TSH",
+    },
+    "discharge_summary_2024_06": {
+        "document_type": "discharge_summary", "patient": PATIENT, "facility": "CITY CARE HOSPITAL",
+        "attending_doctor": "Dr. Vikram Rao", "admission_date": "2024-06-01", "discharge_date": "2024-06-05",
+        "diagnoses": ["Acute gastroenteritis with moderate dehydration", "Type 2 Diabetes Mellitus (known case)"],
+        "presenting_complaints": ["Loose stools and vomiting for 2 days, weakness."],
+        "hospital_course": "Patient was managed with IV fluids, antiemetics and supportive care. Symptoms improved. Tolerating orally at discharge. Vitals stable.",
+        "procedures": [],
+        "investigations": [
+            _lab("Serum Sodium", 132, "mmol/L", "135 - 145"), _lab("Serum Potassium", 3.3, "mmol/L", "3.5 - 5.1"),
+            _lab("Serum Creatinine", 1.4, "mg/dL", "0.7 - 1.3"), _lab("Haemoglobin", 13.5, "g/dL", "13.0 - 17.0"),
+            _lab("Random Blood Sugar", 212, "mg/dL", "70 - 140"),
+        ],
+        "discharge_medications": [
+            _med("Tab Ondem 4 mg", "4 mg", "TDS", "", "x 3 days"),
+            _med("ORS sachet", "", "SOS", "", ""),
+            _med("Tab Pantocid 40 mg", "40 mg", "OD", "before breakfast", "x 7 days"),
+            _med("Cap Sporlac", "", "BD", "", "x 5 days"),
+            _med("Tab Glycomet 500 mg", "500 mg", "1-0-1", "after food", "continue"),
+        ],
+        "follow_up": "Review in OPD after 1 week with Serum Electrolytes, Creatinine.",
+        "advice": ["Soft diet, adequate oral fluids."],
+    },
+}
+
+
+def write_truth():
+    import json
+
+    out = ROOT / "tests" / "fixtures" / "synthetic_truth"
+    out.mkdir(parents=True, exist_ok=True)
+    for name, truth in TRUTH.items():
+        (out / f"{name}.json").write_text(json.dumps(truth, indent=2) + "\n")
 
 
 if __name__ == "__main__":

@@ -1,0 +1,60 @@
+{
+  "document_type": "prescription",
+  "patient": {
+    "name": "Rahul Sharma",
+    "age_years": 45,
+    "sex": "male"
+  },
+  "prescriber": "Dr. Anjali Mehta",
+  "prescriber_registration": "MMC 2009/03/5678",
+  "facility": "Mehta Family Clinic",
+  "date": "2024-03-15",
+  "complaints": [
+    "Routine follow-up, fatigue"
+  ],
+  "diagnoses": [
+    "Type 2 Diabetes Mellitus",
+    "Dyslipidemia"
+  ],
+  "medications": [
+    {
+      "name": "Tab Glycomet 500 mg",
+      "strength": "500 mg",
+      "dosage": "1-0-1",
+      "timing": "after food",
+      "duration": "x 30 days"
+    },
+    {
+      "name": "Tab Atorva 10 mg",
+      "strength": "10 mg",
+      "dosage": "0-0-1",
+      "timing": "at bedtime",
+      "duration": "x 30 days"
+    },
+    {
+      "name": "Tab Telma 40 mg",
+      "strength": "40 mg",
+      "dosage": "1-0-0",
+      "timing": "before breakfast",
+      "duration": "x 30 days"
+    },
+    {
+      "name": "Cap Uprise-D3 60K",
+      "strength": "60K",
+      "dosage": "once a week",
+      "timing": "after food",
+      "duration": "x 8 weeks"
+    },
+    {
+      "name": "Tab Pan 40 mg",
+      "strength": "40 mg",
+      "dosage": "OD",
+      "timing": "AC",
+      "duration": "x 14 days"
+    }
+  ],
+  "advice": [
+    "Low sugar, low fat diet. Brisk walk 30 min daily."
+  ],
+  "follow_up": "after 6 months with FBS, HbA1c, Lipid profile, TSH, Vit D"
+}

@@ -1,0 +1,14 @@
+Extract this LAB REPORT into JSON.
+Rules:
+- One entry in "tests" per test row that has a result. Skip section headings and column headers.
+- "value" is the result exactly as printed. "unit" and "reference_range" exactly as printed.
+- "flag" is H or L only if it is printed beside the result; otherwise "".
+- Dates exactly as printed (do not reformat).
+
+Example output for a different report:
+{"patient_name": "Mrs. Sunita Rao", "age": "52 Y", "sex": "Female", "patient_id": "LB-2231", "facility": "Metro Path Labs", "referring_doctor": "Dr. K. Iyer", "pathologist": "Dr. P. Shah, MD", "collected_date": "02/01/2024", "report_date": "02/01/2024", "tests": [{"name": "Hemoglobin", "value": "10.9", "unit": "gm/dl", "reference_range": "12.0 - 15.5", "flag": "L"}, {"name": "S. Creatinine", "value": "0.8", "unit": "mg/dl", "reference_range": "0.6-1.1", "flag": ""}]}
+
+OCR text of the page (may contain errors):
+<<<
+{ocr_text}
+>>>

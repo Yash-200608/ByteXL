@@ -14,6 +14,7 @@ class FakeLLM:
         self.up = up
         self._models = models if models is not None else ["qwen2.5vl:3b", "qwen2.5vl:7b", "qwen2.5:7b"]
         self.calls = []
+        self.handler = None
 
     def is_up(self):
         return self.up
@@ -23,6 +24,8 @@ class FakeLLM:
 
     def chat(self, model, messages, schema=None, num_predict=None):
         self.calls.append({"model": model, "messages": messages, "schema": schema})
+        if self.handler is not None and not self.responses:
+            return self.handler(model, messages, schema)
         if not self.responses:
             raise AssertionError("FakeLLM has no queued response")
         r = self.responses.pop(0)

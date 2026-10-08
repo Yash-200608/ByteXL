@@ -1,0 +1,19 @@
+Extract this PRESCRIPTION into JSON.
+Rules:
+- One entry in "medicines" per prescribed medicine, in order.
+- "name" is ONLY the form word (Tab, Cap, Syp, Inj), the medicine name and the strength if written right after it, e.g. "Tab Dolo 650". Never put frequency, timing or duration in "name".
+- "strength" is the number and unit exactly as written; do not add a unit that is not written (e.g. "Tab Dolo 650" has strength "650").
+- "dosage" is the frequency exactly as written (e.g. 1-0-1, 0-0-1, OD, BD, TDS, SOS, once a week).
+- "timing" is the food/time instruction as written (e.g. after food, before breakfast, AC, PC, HS, empty stomach).
+- "duration" exactly as written (e.g. x 5 days, for 1 week, x 1 month). Empty if not written.
+- "complaints" from C/O; "diagnoses" from Dx / Diagnosis / Impression, as written, one item per condition.
+- "follow_up" is the follow-up instruction without the word "Review" or "Follow up", e.g. "after 6 months with FBS".
+- "handwritten" is true if the medicines are handwritten.
+
+Example output for a different prescription:
+{"patient_name": "Ramesh Kumar", "age": "60", "sex": "M", "doctor_name": "Dr. S. Gupta", "doctor_registration": "DMC 12345", "clinic": "Gupta Clinic", "date": "05/02/2024", "complaints": ["cough x 5 days"], "diagnoses": ["URTI"], "medicines": [{"name": "Tab Azee 500", "strength": "500", "dosage": "OD", "timing": "after food", "duration": "x 3 days", "instructions": ""}, {"name": "Syp Ascoril", "strength": "", "dosage": "1-1-1", "timing": "", "duration": "x 5 days", "instructions": "2 tsp"}], "advice": ["steam inhalation"], "follow_up": "after 5 days", "handwritten": false}
+
+OCR text of the page (may contain errors):
+<<<
+{ocr_text}
+>>>
