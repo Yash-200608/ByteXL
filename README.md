@@ -1,8 +1,24 @@
-# ByteXL — your health records, explained
+# PERRY — Your Personal Health Assistant
 
-**Snap a lab report, prescription or discharge summary → get verified structured data, an ABDM-ready FHIR R4 record, a plain-language summary in English and Hindi, and one timeline of your health — all running locally, with no cloud APIs.**
+**All your health records. One intelligent companion.**
 
-Built for the Altrix Labs "AI-Powered Personal Health Copilot" hackathon (Round 1).
+Snap a lab report, prescription or discharge summary and PERRY gives you:
+- verified structured data;
+- an ABDM-ready FHIR R4 record;
+- a plain-language summary in English and Hindi;
+- one timeline of your health;
+- a chat and voice assistant that answers questions about *your own* records in 13 languages: English, Hinglish and 11 Indian languages.
+
+Everything runs locally, with no cloud APIs.
+
+Built for the Altrix Labs "AI-Powered Personal Health Copilot" hackathon. The project began as **ByteXL**, and that is still
+the repository, package and API name; PERRY is the product users see.
+
+![PERRY answering a question, with the avatar in its Explaining state](docs/screenshots/perry_chat.jpg)
+
+| Medications | Timeline |
+|---|---|
+| ![Medications page](docs/screenshots/medications.jpg) | ![Timeline page](docs/screenshots/timeline.jpg) |
 
 ## Setup (≤ 10 commands)
 
@@ -60,11 +76,45 @@ Green steps are deterministic Python, orange steps use a local LLM. The principl
 - **Unified timeline and trends**: all documents chronologically; any test over time with the reference band shaded; current medicines with duplicate-medicine alerts ("Metformin appears on 2 of your documents — ask your doctor").
 - **ABDM-ready**: mock ABHA number (Verhoeff-valid `91-XXXX-XXXX-XXXX`) and ABHA address on every patient, link-existing-ABHA flow, one-click FHIR export.
 
-## PERRY — your ByteXL assistant
+## The PERRY interface
+
+- **Layout:** a dark-teal glass dashboard in three columns, with the bundled Kalam and Baloo 2 fonts (OFL), so it works offline.
+  - **Sidebar:** PERRY logo; 8 pages (Chat with PERRY, My Reports, Medications, Timeline, Overview, Documents, FHIR Record,
+    Pending Items, with a count badge); user card; Settings (profile switcher, model status).
+  - **Header:** tagline; "Search your records…" (the search goes through PERRY's own record search); notifications for
+    pending confirmations, duplicate medicines and documents still being read; "PERRY ONLINE" status.
+  - **Chat panel:**
+    - Welcome block and six quick actions: Latest Report, My Medicines, My Timeline, Recent Documents, Pending
+      Confirmations, Compare Reports.
+    - Timestamped bubbles; High / Low / Normal value tags.
+    - Source cards that open the exact document in My Reports; 👍 / 👎 feedback.
+    - A composer with 📎 attach and 🎙️ mic.
+    - A reply-language picker (auto-detect or pick one of 13) and a **Speak with PERRY** menu for voice settings.
+  - **Avatar column:** PERRY on a glowing platform with hologram panels, a speech bubble and three live state cards.
+- **One avatar state machine** (`ui/perry_state.py`), driven by what is really happening:
+
+  | State | When | On screen |
+  |---|---|---|
+  | Waiting | idle | arms crossed, "Ready when you are!" |
+  | Listening | the mic is recording | pulsing rings |
+  | Thinking | a voice question is being transcribed, or a question is being understood | `?` marks |
+  | Searching | PERRY is querying your records | magnifier over a document |
+  | Speaking | the browser is reading the answer aloud | sound waves |
+  | Explaining | an answer was just given | hologram chart |
+  | Celebrating | an upload succeeded | confetti |
+  | Confused | something failed | orange alert, "let's try that again" |
+
+  The server sets the state in the session. Listening and speaking come from the browser itself (the mic button and the
+  speech engine's start/end events), so the animation matches real activity. Transitions are validated, so
+  Waiting → Explaining, for example, is rejected. Animations respect `prefers-reduced-motion`.
+- **Mascot art:** the PERRY images in `ui/static/perry/` are fan-art placeholders inspired by Disney's Perry the
+  Platypus, used for this non-commercial hackathon demo only. Replace them before any public or commercial use.
+
+## PERRY — the assistant
 
 PERRY is the app's home page: a chat assistant that answers questions about the selected user's own records in English, Hindi
 (Devanagari) or Hinglish, for example "What changed in my health records?", "Meri latest report samjhao", or "Which medicine was
-prescribed most recently?". It lives in `app/agent/` and reuses ByteXL's existing services. It has no database of its own.
+prescribed most recently?". It lives in `app/agent/` and reuses the existing record services. It has no database of its own.
 
 - **User-scoped tools only.** The app binds a tool set to the current user (`PerryTools(patient_id)`). The model only picks a tool name
   and its arguments, which are checked against strict schemas that reject extra fields. It can't pass or change a user ID, read
@@ -99,10 +149,11 @@ prescribed most recently?". It lives in `app/agent/` and reuses ByteXL's existin
   - Model: `TRANSLATE_MODEL`. `PERRY_INDIC_MODE=translate|llm|english`; `llm` asks the text model to reply directly.
     `PERRY_HINDI_MODE=translate` uses the translator for Hindi too.
 - **Voice:** tap the mic in PERRY's chat box to ask out loud. The spoken question goes through the same agent, so all of the
-  account-scoping and safety rules still apply. Two speech-recognition engines, switchable under **🎙️ Voice**:
+  account-scoping and safety rules still apply. Two speech-recognition engines, switchable under **Speak with PERRY**:
   - *On this device* (default): `faster-whisper` (`STT_MODEL=small`, int8 on CPU) transcribes the recording, which never
-    leaves the machine. It takes about 5 seconds per question on a 4-core i5. Endpoint: `POST /patients/{id}/perry/voice`
-    (WAV, up to 60 s). Strongest in English and Hindi.
+    leaves the machine. It takes about 5 seconds per question on a 4-core i5. Endpoints: `POST /patients/{id}/perry/transcribe`
+    (transcript only, used by the UI so the avatar can show each step) and `POST /patients/{id}/perry/voice` (transcribe and
+    answer in one call); both take WAV up to 60 s. Strongest in English and Hindi.
   - *Browser*: the Chrome/Edge Web Speech API, through a small built-in component. It covers more Indian languages, but the
     browser sends the audio to Google or Microsoft, and the UI says so.
   - Answers are read aloud with the browser's own voices (`speechSynthesis`, in the reply's language): automatically for
@@ -111,7 +162,7 @@ prescribed most recently?". It lives in `app/agent/` and reuses ByteXL's existin
   - **Indian accent:**
     - PERRY ranks the browser's voices for each reply language: an exact `-IN` locale first (e.g. `en-IN`, `hi-IN`),
       then natural or neural voices, then known Indian voice names such as Neerja, Prabhat, Swara, Madhur and Heera.
-    - **🎙️ Voice** has a voice picker, speed and pitch, a "Hear PERRY" preview, and a toggle for online natural voices,
+    - **Speak with PERRY** has a voice picker, speed and pitch, a "Hear PERRY" preview, and a toggle for online natural voices,
       which are on by default. Edge sends their text to Microsoft, and Chrome to Google.
     - Before speaking, text is rewritten for natural pronunciation: units in words ("mg/dL" → "milligrams per decilitre"),
       dates, Tab → Tablet, dose codes spelled out, `0-1-0` read as numbers.
@@ -120,7 +171,11 @@ prescribed most recently?". It lives in `app/agent/` and reuses ByteXL's existin
     words, such as "raziovas", are then snapped to those names ("Rosuvas"), and only to those. The UI shows each correction.
 - **Settings:** `PERRY_MODE=llm|template`; `PERRY_HINDI_MODE=template|llm` controls Devanagari replies (template by default, for the same
   reason as the summaries).
-- **API:** `POST /patients/{id}/perry` with `{"message": "...", "history": [...]}`. The patient in the path stands in for the logged-in
+- **Reply language:** auto-detected from the question by default; the composer's language picker overrides it (the
+  `language` field, one of `en`, `hinglish` and the 11 Indian language codes). An unknown code is rejected with 422.
+- **API:** `POST /patients/{id}/perry` with `{"message": "...", "history": [...], "language": null}`. Each source in the
+  reply carries its `document_id`, so the UI can open that record. `POST /patients/{id}/perry/feedback` stores 👍 / 👎 in
+  `perry_feedback`. The patient in the path stands in for the logged-in
   user: ByteXL has no login, so the selected patient is treated as the current user.
 
 ## Medical safety approach
@@ -163,7 +218,8 @@ Document type was classified correctly for all five. Full field-level error list
 
 ## API
 
-Interactive docs at `http://localhost:8000/docs`. Main endpoints: `POST /patients`, `POST /patients/{id}/abha/link`, `POST /patients/{id}/documents`, `GET /documents/{id}`, `GET /documents/{id}/fhir`, `GET /documents/{id}/summary?lang=en|hi`, `POST /documents/{id}/confirm`, `GET /patients/{id}/timeline`, `GET /patients/{id}/trends/{loinc}`, `GET /patients/{id}/medications`, `GET /patients/{id}/export`, `GET /health`.
+Interactive docs at `http://localhost:8000/docs`. Main endpoints: `POST /patients`, `POST /patients/{id}/abha/link`, `POST /patients/{id}/documents`, `GET /documents/{id}`, `GET /documents/{id}/fhir`, `GET /documents/{id}/summary?lang=en|hi`, `POST /documents/{id}/confirm`, `GET /patients/{id}/timeline`, `GET /patients/{id}/trends/{loinc}`, `GET /patients/{id}/medications`, `GET /patients/{id}/overview`, `GET /patients/{id}/export`, `POST /patients/{id}/perry`,
+`POST /patients/{id}/perry/transcribe`, `POST /patients/{id}/perry/voice`, `POST /patients/{id}/perry/feedback`, `GET /health`.
 
 ## Limitations
 
@@ -172,6 +228,10 @@ Interactive docs at `http://localhost:8000/docs`. Main endpoints: `POST /patient
 - Adult reference ranges only; paediatric and pregnancy ranges are out of scope (the printed range is used if present, otherwise the flag is "unknown").
 - Lab table has 51 tests and the brand table 103 brands; unknown items are kept as written and sent to the confirm queue. A larger `data/reference/medicines_extended.csv` is merged automatically.
 - ABHA numbers are mock values; there is no real ABDM gateway integration (consent, HIP/HIU flows).
-- FHIR uses the R4B Python models, which are wire-compatible with R4 for the resources used; bundles have not been run through the official NRCeS validator.
+- FHIR uses the R4B Python models, which are wire-compatible with R4 for the resources used. Against the official NRCeS
+  package (`ndhm.in#6.5.0`, HL7 validator), lab report bundles validate with 0 errors. Prescriptions and discharge
+  summaries still have 5–10 errors, all from medicine coding: the profile requires SNOMED CT drug codes, which need the
+  licensed SNOMED CT India Drug Extension (see `docs/PROGRESS.md`, decision 31).
+- The UI is designed for desktop and laptop screens. Tablet and phone layouts exist but have not been fully checked.
 - Hindi summaries use a deterministic Hindi composer by default (curated phrases, same structure) because the 7B model's Hindi was unreliable on test hardware; set `HINDI_SUMMARY_MODE=llm` to have the LLM write Hindi under the same safety checks.
 - Hindi OCR (Devanagari) is optional (`OCR_HINDI=true`) and was not part of the evaluated samples.
