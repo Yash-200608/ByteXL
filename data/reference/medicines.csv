@@ -1,0 +1,104 @@
+brand,generic,strength,form,drug_class
+Glycomet,metformin,500 mg,tablet,antidiabetic (biguanide)
+Glucophage,metformin,500 mg,tablet,antidiabetic (biguanide)
+Gluconorm,metformin,500 mg,tablet,antidiabetic (biguanide)
+Janumet,sitagliptin + metformin,50/500 mg,tablet,antidiabetic (DPP-4 inhibitor + biguanide)
+Istamet,sitagliptin + metformin,50/500 mg,tablet,antidiabetic (DPP-4 inhibitor + biguanide)
+Januvia,sitagliptin,100 mg,tablet,antidiabetic (DPP-4 inhibitor)
+Galvus,vildagliptin,50 mg,tablet,antidiabetic (DPP-4 inhibitor)
+Galvus Met,vildagliptin + metformin,50/500 mg,tablet,antidiabetic (DPP-4 inhibitor + biguanide)
+Amaryl,glimepiride,1 mg,tablet,antidiabetic (sulfonylurea)
+Glimisave,glimepiride,1 mg,tablet,antidiabetic (sulfonylurea)
+Jardiance,empagliflozin,10 mg,tablet,antidiabetic (SGLT2 inhibitor)
+Forxiga,dapagliflozin,10 mg,tablet,antidiabetic (SGLT2 inhibitor)
+Lantus,insulin glargine,100 IU/mL,injection,insulin
+Huminsulin,human insulin,40 IU/mL,injection,insulin
+Mixtard,human insulin (premixed),40 IU/mL,injection,insulin
+Atorva,atorvastatin,10 mg,tablet,statin
+Lipitor,atorvastatin,10 mg,tablet,statin
+Storvas,atorvastatin,10 mg,tablet,statin
+Rosuvas,rosuvastatin,10 mg,tablet,statin
+Rozavel,rosuvastatin,10 mg,tablet,statin
+Crestor,rosuvastatin,10 mg,tablet,statin
+Telma,telmisartan,40 mg,tablet,blood pressure (ARB)
+Telma H,telmisartan + hydrochlorothiazide,40/12.5 mg,tablet,blood pressure (ARB + diuretic)
+Losar,losartan,50 mg,tablet,blood pressure (ARB)
+Amlong,amlodipine,5 mg,tablet,blood pressure (calcium channel blocker)
+Amlokind,amlodipine,5 mg,tablet,blood pressure (calcium channel blocker)
+Stamlo,amlodipine,5 mg,tablet,blood pressure (calcium channel blocker)
+Concor,bisoprolol,5 mg,tablet,beta blocker
+Metolar,metoprolol,25 mg,tablet,beta blocker
+Lasix,furosemide,40 mg,tablet,diuretic
+Dytor,torsemide,10 mg,tablet,diuretic
+Aldactone,spironolactone,25 mg,tablet,diuretic
+Ecosprin,aspirin,75 mg,tablet,antiplatelet
+Ecosprin AV,aspirin + atorvastatin,75/10 mg,capsule,antiplatelet + statin
+Clopilet,clopidogrel,75 mg,tablet,antiplatelet
+Deplatt,clopidogrel,75 mg,tablet,antiplatelet
+Thyronorm,levothyroxine,25 mcg,tablet,thyroid hormone
+Eltroxin,levothyroxine,25 mcg,tablet,thyroid hormone
+Thyrox,levothyroxine,25 mcg,tablet,thyroid hormone
+Dolo,paracetamol,650 mg,tablet,analgesic / antipyretic
+Calpol,paracetamol,500 mg,tablet,analgesic / antipyretic
+Crocin,paracetamol,500 mg,tablet,analgesic / antipyretic
+Combiflam,ibuprofen + paracetamol,400/325 mg,tablet,analgesic (NSAID combination)
+Brufen,ibuprofen,400 mg,tablet,analgesic (NSAID)
+Zerodol,aceclofenac,100 mg,tablet,analgesic (NSAID)
+Ultracet,tramadol + paracetamol,37.5/325 mg,tablet,analgesic
+Meftal Spas,mefenamic acid + dicyclomine,250/10 mg,tablet,antispasmodic
+Cyclopam,dicyclomine + paracetamol,20/500 mg,tablet,antispasmodic
+Pan,pantoprazole,40 mg,tablet,acid reducer (PPI)
+Pantocid,pantoprazole,40 mg,tablet,acid reducer (PPI)
+Pantop,pantoprazole,40 mg,tablet,acid reducer (PPI)
+Pan D,pantoprazole + domperidone,40/30 mg,capsule,acid reducer + antiemetic
+Razo,rabeprazole,20 mg,tablet,acid reducer (PPI)
+Omez,omeprazole,20 mg,capsule,acid reducer (PPI)
+Nexpro,esomeprazole,40 mg,tablet,acid reducer (PPI)
+Rantac,ranitidine,150 mg,tablet,acid reducer (H2 blocker)
+Ondem,ondansetron,4 mg,tablet,antiemetic
+Emeset,ondansetron,4 mg,tablet,antiemetic
+Domstal,domperidone,10 mg,tablet,antiemetic
+Sporlac,lactic acid bacillus,,capsule,probiotic
+Econorm,saccharomyces boulardii,250 mg,sachet,probiotic
+Electral,oral rehydration salts,,sachet,oral rehydration
+ORS,oral rehydration salts,,sachet,oral rehydration
+Azithral,azithromycin,500 mg,tablet,antibiotic
+Azee,azithromycin,500 mg,tablet,antibiotic
+Augmentin,amoxicillin + clavulanic acid,625 mg,tablet,antibiotic
+Moxikind CV,amoxicillin + clavulanic acid,625 mg,tablet,antibiotic
+Mox,amoxicillin,500 mg,capsule,antibiotic
+Taxim O,cefixime,200 mg,tablet,antibiotic
+Zifi,cefixime,200 mg,tablet,antibiotic
+Ciplox,ciprofloxacin,500 mg,tablet,antibiotic
+Norflox,norfloxacin,400 mg,tablet,antibiotic
+Metrogyl,metronidazole,400 mg,tablet,antibiotic / antiprotozoal
+Allegra,fexofenadine,120 mg,tablet,antihistamine
+Cetzine,cetirizine,10 mg,tablet,antihistamine
+Okacet,cetirizine,10 mg,tablet,antihistamine
+Levocet,levocetirizine,5 mg,tablet,antihistamine
+Montair,montelukast,10 mg,tablet,anti-allergy (leukotriene antagonist)
+Montek LC,montelukast + levocetirizine,10/5 mg,tablet,anti-allergy
+Asthalin,salbutamol,100 mcg,inhaler,bronchodilator
+Deriphyllin,etofylline + theophylline,150 mg,tablet,bronchodilator
+Ascoril,terbutaline + bromhexine + guaifenesin,,syrup,cough syrup
+Benadryl,diphenhydramine,,syrup,cough syrup / antihistamine
+Shelcal,calcium carbonate + vitamin d3,500 mg,tablet,calcium supplement
+Uprise D3,cholecalciferol,60000 IU,capsule,vitamin D supplement
+Calcirol,cholecalciferol,60000 IU,sachet,vitamin D supplement
+Neurobion Forte,vitamin b complex,,tablet,vitamin supplement
+Becosules,vitamin b complex + vitamin c,,capsule,vitamin supplement
+Limcee,ascorbic acid,500 mg,tablet,vitamin C supplement
+Folvite,folic acid,5 mg,tablet,vitamin supplement
+Livogen,ferrous fumarate + folic acid,,tablet,iron supplement
+Orofer XT,ferrous ascorbate + folic acid,,tablet,iron supplement
+Pregalin,pregabalin,75 mg,capsule,nerve pain
+Gabapin,gabapentin,300 mg,tablet,nerve pain
+Alprax,alprazolam,0.25 mg,tablet,anti-anxiety
+Udiliv,ursodeoxycholic acid,300 mg,tablet,liver / gallbladder
+Duphalac,lactulose,,syrup,laxative
+Cremaffin,liquid paraffin + milk of magnesia,,syrup,laxative
+Zyloric,allopurinol,100 mg,tablet,uric acid lowering
+Febutaz,febuxostat,40 mg,tablet,uric acid lowering
+Wysolone,prednisolone,10 mg,tablet,steroid
+Omnacortil,prednisolone,10 mg,tablet,steroid
+Dexona,dexamethasone,0.5 mg,tablet,steroid
