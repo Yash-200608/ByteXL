@@ -132,6 +132,13 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
       Drug Extension (MLDS licence).
     - Remaining warnings are mostly best-practice: no narrative (dom-6), the local generic code system, and
       inactive SNOMED 409586006 (Complaint) on complaint Conditions.
+32. Flaky summary tests on Windows were a JSON-store bug, not a summary race.
+    - The atomic write `tmp.replace(path)` intermittently raised `PermissionError [WinError 5]`. Windows refuses to
+      replace a file while another handle (Defender, the search indexer, or a second process such as `seed.py`
+      next to the API) has it open.
+    - The pipeline then failed mid-run, so whichever summary test was running saw no LLM calls.
+    - `_replace_with_retry` retries up to 20 times with linear backoff (about 5 s worst case), then re-raises.
+    - The fast suite went from 1 failure in 2 runs to 0 in 8.
 
 ## Deviations
 

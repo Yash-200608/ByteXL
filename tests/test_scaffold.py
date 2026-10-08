@@ -46,6 +46,44 @@ def test_json_store_duplicate(tmp_path):
         r.insert("documents", {"_id": "d1"})
 
 
+def _flaky_replace(monkeypatch, failures: int):
+    from pathlib import Path
+
+    real = Path.replace
+    state = {"left": failures, "calls": 0}
+
+    def replace(self, target):
+        state["calls"] += 1
+        if state["left"] > 0:
+            state["left"] -= 1
+            raise PermissionError(5, "Access is denied")
+        return real(self, target)
+
+    monkeypatch.setattr(Path, "replace", replace)
+    monkeypatch.setattr("app.store.json_store.REPLACE_BACKOFF_S", 0)
+    return state
+
+
+def test_json_store_retries_transient_windows_lock(tmp_path, monkeypatch):
+    r = JsonFileRepository(tmp_path)
+    r.insert("documents", {"_id": "d1", "v": 1})
+    state = _flaky_replace(monkeypatch, failures=3)
+    r.update("documents", "d1", {"v": 2})
+    assert state["calls"] == 4
+    assert r.get("documents", "d1")["v"] == 2
+
+
+def test_json_store_gives_up_on_persistent_lock(tmp_path, monkeypatch):
+    r = JsonFileRepository(tmp_path)
+    r.insert("documents", {"_id": "d1", "v": 1})
+    monkeypatch.setattr("app.store.json_store.REPLACE_ATTEMPTS", 3)
+    state = _flaky_replace(monkeypatch, failures=10)
+    with pytest.raises(PermissionError):
+        r.update("documents", "d1", {"v": 2})
+    assert state["calls"] == 3
+    assert r.get("documents", "d1")["v"] == 1
+
+
 def test_mongo_store_or_fallback(settings_tmp, monkeypatch):
     from app.store import build_repository
 

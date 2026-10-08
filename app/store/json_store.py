@@ -1,8 +1,23 @@
 import json
 import threading
+import time
 from pathlib import Path
 
 from app.store.base import COLLECTIONS, Repository, matches
+
+REPLACE_ATTEMPTS = 20
+REPLACE_BACKOFF_S = 0.025
+
+
+def _replace_with_retry(src: Path, dst: Path) -> None:
+    for attempt in range(REPLACE_ATTEMPTS):
+        try:
+            src.replace(dst)
+            return
+        except PermissionError:
+            if attempt == REPLACE_ATTEMPTS - 1:
+                raise
+            time.sleep(REPLACE_BACKOFF_S * (attempt + 1))
 
 
 class JsonFileRepository(Repository):
@@ -22,7 +37,7 @@ class JsonFileRepository(Repository):
         path = self._path(collection, doc["_id"])
         tmp = path.with_suffix(".tmp")
         tmp.write_text(json.dumps(doc, ensure_ascii=False, default=str), encoding="utf-8")
-        tmp.replace(path)
+        _replace_with_retry(tmp, path)
         return doc
 
     def insert(self, collection: str, doc: dict) -> dict:
