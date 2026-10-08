@@ -120,8 +120,8 @@ def sidebar() -> dict | None:
             with st.popover("Settings", icon=":material/settings:", width="stretch"):
                 settings_panel(patients or [])
     if not patient:
-        st.markdown('<div class="p-card p-empty"><b>PERRY is ready.</b><br>Create your profile under <b>Settings</b> in the sidebar, '
-                    "then upload your first health record and I'll help you understand it.</div>", unsafe_allow_html=True)
+        empty_state("PERRY is ready.", "Create your profile under <b>Settings</b> in the sidebar, "
+                    "then upload your first health record and I'll help you understand it.")
         return None
     return patient
 
@@ -213,6 +213,11 @@ def header(patient: dict | None):
                     f'<div class="p-online">{"<b></b>PERRY ONLINE" if online else "OFFLINE"}</div>', unsafe_allow_html=True)
     if st.session_state.pop("p-search-go", False):
         st.switch_page("views/perry.py")
+
+
+def empty_state(title: str, body: str) -> None:
+    st.markdown(f'<div class="p-card p-empty p-lounge"><img src="app/static/perry/perry_lounge.png" alt="PERRY relaxing at his desk">'
+                f'<div><b>{title}</b><br>{body}</div></div>', unsafe_allow_html=True)
 
 
 def chip(text: str, flag: str = "unknown") -> str:

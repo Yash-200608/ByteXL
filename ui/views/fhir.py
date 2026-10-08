@@ -3,7 +3,7 @@ import json
 import streamlit as st
 
 import api_client as api
-from common import doc_label, patient_header, safe, setup
+from common import doc_label, empty_state, patient_header, safe, setup
 
 patient = setup("FHIR Record")
 if not patient:
@@ -15,8 +15,7 @@ patient_header(patient)
 
 docs = [d for d in safe(api.get, f"/patients/{patient['_id']}/documents", default=[]) or [] if d["status"]["state"] == "done"]
 if not docs:
-    st.markdown('<div class="p-card p-empty"><b>No health records yet.</b><br>Upload a document and PERRY will build its FHIR record.</div>',
-                unsafe_allow_html=True)
+    empty_state("No health records yet.", "Upload a document and PERRY will build its FHIR record.")
     st.stop()
 
 ids = [d["id"] for d in docs]

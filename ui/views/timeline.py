@@ -1,7 +1,7 @@
 import streamlit as st
 
 import api_client as api
-from common import TYPE_ICON, TYPE_LABEL, chip, flag_label, safe, setup
+from common import TYPE_ICON, TYPE_LABEL, chip, empty_state, flag_label, safe, setup
 
 patient = setup("Timeline")
 if not patient:
@@ -23,7 +23,7 @@ types = st.pills("Show", ["lab_report", "prescription", "discharge_summary"], se
 items = safe(api.get, f"/patients/{pid}/timeline", default=[])
 items = [i for i in items if i["document_type"] in (types or []) or i["status"].get("state") != "done"]
 if not items:
-    st.markdown("<div class='p-card p-empty'><b>PERRY is ready.</b><br>Upload your first health record under Documents and I'll build your timeline.</div>", unsafe_allow_html=True)
+    empty_state("PERRY is ready.", "Upload your first health record under Documents and I'll build your timeline.")
     st.stop()
 
 for it in items:

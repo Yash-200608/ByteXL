@@ -163,6 +163,10 @@ div[class*="st-key-p-speak"] button {{border-radius: 999px !important; backgroun
 .p-dots span:nth-child(2) {{animation-delay: .15s}} .p-dots span:nth-child(3) {{animation-delay: .3s}}
 @keyframes pDots {{0%, 80%, 100% {{opacity: .25; transform: translateY(0)}} 40% {{opacity: 1; transform: translateY(-4px)}}}}
 .p-empty {{text-align: center; padding: 18px; color: var(--p-muted);}}
+.p-lounge {{display: flex; align-items: center; gap: 22px; text-align: left; flex-wrap: wrap; animation: pIn .5s ease-out;}}
+.p-lounge img {{width: min(320px, 100%); border-radius: 18px; border: 1px solid var(--p-border); box-shadow: 0 0 24px rgba(46, 230, 214, .18);}}
+.p-lounge > div {{flex: 1 1 220px; font-size: 1.05rem; line-height: 1.6;}}
+.p-lounge b {{font-family: PerryHand, cursive; font-size: 1.5rem; color: var(--p-cyan2);}}
 
 div[class*="st-key-perry-stage"] {{position: sticky; top: 1rem;}}
 .pv-stage {{position: relative; display: flex; flex-direction: column; align-items: center;}}

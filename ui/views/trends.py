@@ -3,7 +3,7 @@ import pandas as pd
 import streamlit as st
 
 import api_client as api
-from common import FLAG_STYLE, flag_label, safe, setup
+from common import FLAG_STYLE, empty_state, flag_label, safe, setup
 
 patient = setup("Overview")
 if not patient:
@@ -24,8 +24,7 @@ st.markdown("#### Trends")
 
 tests = safe(api.get, f"/patients/{pid}/trends", default=[])
 if not tests:
-    st.markdown('<div class="p-card p-empty"><b>No lab results yet.</b><br>Upload lab reports to see how your values change over time.</div>',
-                unsafe_allow_html=True)
+    empty_state("No lab results yet.", "Upload lab reports to see how your values change over time.")
     st.stop()
 
 options = [t["loinc"] for t in tests]

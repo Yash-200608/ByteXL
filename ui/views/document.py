@@ -4,7 +4,7 @@ import pandas as pd
 import streamlit as st
 
 import api_client as api
-from common import TYPE_LABEL, conf_badge, crop, doc_label, flag_label, highlight, page_image, safe, setup, summary_card
+from common import TYPE_LABEL, conf_badge, crop, empty_state, doc_label, flag_label, highlight, page_image, safe, setup, summary_card
 
 patient = setup("My Reports")
 if not patient:
@@ -13,7 +13,7 @@ if not patient:
 docs = safe(api.get, f"/patients/{patient['_id']}/documents", default=[])
 docs = [d for d in docs if d["status"]["state"] == "done"]
 if not docs:
-    st.info("No processed documents yet. Upload one first.")
+    empty_state("No processed documents yet.", "Upload one under Documents and PERRY will read it for you.")
     st.stop()
 ids = [d["id"] for d in docs]
 current = st.session_state.get("doc_id")

@@ -3,7 +3,7 @@ import html
 import streamlit as st
 
 import api_client as api
-from common import TYPE_LABEL, safe, setup
+from common import TYPE_LABEL, empty_state, safe, setup
 
 patient = setup("Medications")
 if not patient:
@@ -16,9 +16,8 @@ active = data.get("active", [])
 notes = data.get("reconciliation_notes", [])
 
 if not active:
-    st.markdown('<div class="p-card p-empty"><b>No medications found in your records.</b><br>'
-                "When you upload a prescription or discharge summary, PERRY lists the medicines here exactly as written.</div>",
-                unsafe_allow_html=True)
+    empty_state("No medications found in your records.",
+                "When you upload a prescription or discharge summary, PERRY lists the medicines here exactly as written.")
     st.stop()
 
 st.caption(f"Medicines that are current as of {data.get('as_of')}, exactly as written by your doctor. "
