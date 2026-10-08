@@ -24,7 +24,6 @@ def med(name, dosage="", timing="", duration=""):
     return MedicationItem(name=F(name), dosage=F(dosage or None), timing=F(timing or None), duration=F(duration or None))
 
 
-# ---------- dosing grammar ----------
 
 @pytest.mark.parametrize("sig,m,a,n,freq", [
     ("1-0-1", 1, 0, 1, 2), ("1-1-1", 1, 1, 1, 3), ("0-0-1", 0, 0, 1, 1), ("1-0-0", 1, 0, 0, 1), ("0-1-0", 0, 1, 0, 1),
@@ -131,13 +130,13 @@ def test_full_sentences():
     assert parse_dosage("OD", "AC", "x 14 days").text == "once a day · before food · for 14 days"
 
 
-# ---------- units ----------
 
 def test_unit_normalization():
     assert normalize_unit("mg/dl") == "mg/dL"
     assert normalize_unit("gm%") == "g/dL"
     assert normalize_unit("uIU/ml") == "µIU/mL"
     assert normalize_unit("mIU/L") == "µIU/mL"
+    assert normalize_unit("ulU/mL") == "µIU/mL"
     assert normalize_unit("lakh/cumm") == "lakh/µL"
     assert normalize_unit("/cumm") == "/µL"
     assert normalize_unit("mill/cumm") == "10^6/µL"
@@ -168,7 +167,6 @@ def test_other_conversions():
     assert convert(5, "furlongs", "mg/dL") is None
 
 
-# ---------- lab resolution and flags ----------
 
 def test_reference_table_size_and_loinc():
     refs = load_lab_reference()
@@ -265,7 +263,6 @@ def test_hdl_low_only():
     assert normalize_lab(lab("HDL Cholesterol", 70, "mg/dL"), "female").flag == "normal"
 
 
-# ---------- medicines ----------
 
 def test_medicine_table_size():
     assert len({r.brand for r in load_medicines().values()}) >= 50
@@ -299,7 +296,6 @@ def test_extended_csv_merged(tmp_path, monkeypatch):
         load_medicines.cache_clear()
 
 
-# ---------- reconciliation ----------
 
 def _entry(doc, d, name, dosage="", timing="", duration=""):
     m = med(name, dosage, timing, duration)
@@ -340,7 +336,6 @@ def test_is_active_rules():
     assert not is_active(_entry("d", date(2024, 1, 1), "Tab Ecosprin 75", "OD"), date(2024, 9, 10))
 
 
-# ---------- confirm queue ----------
 
 def test_handwritten_always_confirms_name_and_dosage():
     rx = Prescription(medications=[med("Tab Dolo 650", "SOS"), med("Tab Glycomet 500", "BD", "PC", "x 1 month")], is_handwritten=True)

@@ -87,7 +87,30 @@ class Lifter:
             r.printed_flag, _ = self.field(flag[0] if flag != "*" else "*", search=flag, anchor=hit)
         return r
 
+    def grounded(self, value: str) -> bool:
+        from app.extract.boxes import norm
+
+        needle = norm(value).replace(" ", "")
+        return bool(needle) and any(needle in text.replace(" ", "") for _, _, text in self.loc.items)
+
+    def tidy_med(self, m):
+        m = m.model_copy()
+        name, strength = clean(m.name), clean(m.strength)
+        if strength and strength.lower() not in name.lower():
+            joined = f"{name} {strength}"
+            if self.grounded(joined):
+                m.name = joined
+        timing, duration = clean(m.timing), clean(m.duration)
+        if timing and not duration and DURATION_ONLY.fullmatch(timing):
+            m.duration, m.timing = timing, ""
+        dosage = clean(m.dosage)
+        tm = TRAILING_TIMING.search(dosage)
+        if tm and not clean(m.timing) and tm.start() > 0:
+            m.dosage, m.timing = dosage[: tm.start()].strip(), tm.group(1)
+        return m
+
     def med(self, m) -> MedicationItem:
+        m = self.tidy_med(m)
         item = MedicationItem()
         item.name, hit = self.field(m.name)
         item.strength, _ = self.field(m.strength, anchor=hit)
@@ -99,6 +122,16 @@ class Lifter:
         if form:
             item.form = Field[str](value=form, confidence=item.name.confidence, source_box=item.name.source_box)
         return item
+
+
+DURATION_ONLY = re.compile(r"(?:x|×|for)\s*\d+\s*(?:days?|d|wks?|weeks?|months?|mo)\.?", re.I)
+TRAILING_TIMING = re.compile(r"\s(ac|pc|hs|after food|before food|after meals?|before meals?|empty stomach|before breakfast|after breakfast)$", re.I)
+REG_PREFIX = re.compile(r"^.*?\breg(?:istration)?\.?\s*(?:no\.?|number)?\s*[:\-]?\s*", re.I)
+
+
+def tidy_registration(value: str) -> str:
+    value = clean(value)
+    return REG_PREFIX.sub("", value) if REG_PREFIX.match(value) else value
 
 
 FORMS = {
@@ -134,7 +167,7 @@ def lift(doc_type: str, raw, pages: list[PageData], meta: ExtractionMeta):
         return Prescription(
             patient=lf.patient(raw.patient_name, raw.age, raw.sex),
             prescriber=lf.text(raw.doctor_name),
-            prescriber_registration=lf.text(raw.doctor_registration),
+            prescriber_registration=lf.text(tidy_registration(raw.doctor_registration)),
             facility=lf.text(raw.clinic),
             date=lf.date(raw.date),
             complaints=lf.texts(raw.complaints),

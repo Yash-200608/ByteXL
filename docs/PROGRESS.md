@@ -79,7 +79,10 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
     from" picker (works on touch and is testable). Document labels are de-duplicated because Streamlit resolves
     selectbox values by label.
 23. Missing document dates stay `null` (never the upload date) so historical documents never look current.
-24. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+24. Medicine fields get grounded, deterministic tidy-ups after extraction: strength re-attached to the name only if
+    the combined text appears verbatim in the OCR, duration-shaped "timing" moved to duration, trailing AC/PC/HS
+    split from the dosage, "Reg. No." prefixes stripped. Lifted prescription F1 from 0.77–0.81 to 0.96–0.97.
+25. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
 
 ## Deviations
 

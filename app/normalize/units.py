@@ -14,7 +14,7 @@ UNIT_ALIASES = {
     "lakh/cumm": "lakh/µL", "lakhs/cumm": "lakh/µL", "lakh/ul": "lakh/µL", "lakh/mm3": "lakh/µL", "lakhs/ul": "lakh/µL",
     "mill/cumm": "10^6/µL", "million/cumm": "10^6/µL", "million/ul": "10^6/µL", "10^6/ul": "10^6/µL", "mill/ul": "10^6/µL",
     "x10^12/l": "10^6/µL", "10^12/l": "10^6/µL", "m/ul": "10^6/µL", "10*6/ul": "10^6/µL",
-    "uiu/ml": "µIU/mL", "µiu/ml": "µIU/mL", "miu/l": "µIU/mL", "uiu/l": "µIU/mL", "microiu/ml": "µIU/mL", "mu/l": "µIU/mL",
+    "uiu/ml": "µIU/mL", "ulu/ml": "µIU/mL", "uiu/mi": "µIU/mL", "µiu/ml": "µIU/mL", "miu/l": "µIU/mL", "uiu/l": "µIU/mL", "microiu/ml": "µIU/mL", "mu/l": "µIU/mL",
     "ng/ml": "ng/mL", "pg/ml": "pg/mL", "nmol/l": "nmol/L", "pmol/l": "pmol/L", "ng/dl": "ng/dL", "ug/dl": "µg/dL",
     "µg/dl": "µg/dL", "mcg/dl": "µg/dL", "mg/l": "mg/L",
     "u/l": "U/L", "iu/l": "U/L", "units/l": "U/L",

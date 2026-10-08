@@ -47,7 +47,7 @@ flowchart TD
     Q --> FH[FHIR R4 Bundle build + round-trip validation]:::det
     FH --> S2[(bundles, observations_index, documents)]:::store
     S2 --> SM[Summary wording EN / HI from normalized JSON only]:::llm
-    SM --> G{Banned phrases? numbers grounded? abnormal values covered?}:::det
+    SM --> G{Safety checks pass?}:::det
     G -- violation, once --> SM
     G -- still violating --> T[Deterministic template summary]:::det
     G -- ok --> D[Attach fixed disclaimer + deterministic medicine table]:::det
@@ -57,7 +57,7 @@ flowchart TD
     Q --> CQ[Confirm queue UI → edits patch document + rebuild bundle]:::det
 ```
 
-Legend: green = deterministic Python, orange = LLM step, blue = persistence.
+Legend: green = deterministic Python, orange = LLM step, blue = persistence. "Safety checks" = banned phrases, number grounding, abnormal-value coverage (and Devanagari ratio for Hindi), see §7.
 
 Stage list (the `status.stage` value the UI polls): `stored → ocr → classify → extract → normalize → fhir → summarize → done` (or `failed` with a user-safe message).
 

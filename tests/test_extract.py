@@ -151,3 +151,27 @@ def test_eval_script_skips_empty_expected(tmp_path, settings_tmp):
     out = tmp_path / "eval.md"
     assert ev.main(["--out", str(out)]) == 0
     assert "expected JSON still empty" in out.read_text()
+
+
+def test_tidy_med_grounded_fixes(lab_pages):
+    from app.extract.lift import Lifter
+    from app.extract.llm_schemas import MedicineLLM
+    from app.ingest.models import OcrLine, PageData
+
+    page = PageData(index=0, width=1000, height=1000, image_path="x", source="ocr",
+                    lines=[OcrLine(text="1) Tab Dolo 650 SOS for fever x 3 days", box=[10, 10, 900, 40]),
+                           OcrLine(text="2) Tab Pan 40 mg OD AC x 14 days", box=[10, 60, 900, 90])])
+    lf = Lifter([page], retried=False, low=False)
+    a = lf.med(MedicineLLM(name="Tab Dolo", strength="650", dosage="SOS", timing="x 3 days", duration=""))
+    assert a.name.value == "Tab Dolo 650" and a.duration.value == "x 3 days" and a.timing.value is None
+    b = lf.med(MedicineLLM(name="Tab Pan", strength="40 mg", dosage="OD AC", timing="", duration="x 14 days"))
+    assert b.name.value == "Tab Pan 40 mg" and b.dosage.value == "OD" and b.timing.value == "AC"
+    c = lf.med(MedicineLLM(name="Tab Pan", strength="80 mg", dosage="OD", timing="", duration=""))
+    assert c.name.value == "Tab Pan"
+
+
+def test_tidy_registration():
+    from app.extract.lift import tidy_registration
+
+    assert tidy_registration("MBBS, MD (Medicine)| Reg. No. MMC 2009/03/5678") == "MMC 2009/03/5678"
+    assert tidy_registration("MMC 2009/03/5678") == "MMC 2009/03/5678"
