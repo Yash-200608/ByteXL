@@ -27,6 +27,8 @@ class Settings(BaseSettings):
     vision_slow_threshold_s: float = 90.0
 
     ocr_lang: str = "en"
+    ocr_det_model: str = "PP-OCRv5_mobile_det"
+    ocr_rec_model: str = "PP-OCRv5_mobile_rec"
     ocr_hindi: bool = False
     pdf_dpi: int = 200
     min_page_chars: int = 30

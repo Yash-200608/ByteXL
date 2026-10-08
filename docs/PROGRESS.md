@@ -8,7 +8,7 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 |---|---|---|
 | 1 Architecture | done | phase 1 |
 | 2 Scaffold | done | phase 2 |
-| 3 Ingest & OCR | pending | |
+| 3 Ingest & OCR | done | phase 3 |
 | 4 Extraction | pending | |
 | 5 Normalization | pending | |
 | 6 FHIR & API | pending | |
@@ -39,7 +39,14 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 6. Store selection: `STORE_BACKEND=auto` tries Mongo (1.5 s timeout) and falls back to `data/store/*.json`.
 7. LLM access goes through `app/llm/client.py` (`OllamaClient.structured`): JSON-schema-constrained output, Pydantic
    validation, one retry with the errors fed back. Tests inject a `FakeLLM` via `set_llm`.
-8. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+8. OCR uses PaddleOCR `PP-OCRv5_mobile_det/rec` by default (configurable `OCR_DET_MODEL`/`OCR_REC_MODEL`):
+   ~20 s/page on this CPU vs ~60 s for the PP-OCRv6 medium default, mean confidence 0.97 vs 0.99, and it
+   returns cell-level boxes (better source boxes). Set the medium models on a GPU machine.
+9. Text-layer PDF pages keep PyMuPDF line boxes scaled to the 200 DPI page raster so all boxes share one coordinate
+   space. Photo/scan pages are deskewed + contrast-stretched before OCR and the processed image is what is stored.
+10. Document classifier: weighted keyword rules; accepted when top score ≥ 4 and margin ≥ 3, else text-LLM
+    fallback, else best rule score (`rules_low_margin`). All five samples classify by rules.
+11. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
 
 ## Deviations
 
@@ -47,8 +54,8 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 
 ## Known issues
 
-- None yet.
+- PaddlePaddle 3.3.1 crashes with oneDNN enabled; `enable_mkldnn=False` is set in `app/ingest/ocr.py`.
 
 ## Next step
 
-Phase 3 — ingest & OCR.
+Phase 4 — extraction.
