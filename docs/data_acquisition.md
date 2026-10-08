@@ -1,7 +1,8 @@
-# ByteXL — Data Acquisition & Research Map (pass 1)
+# ByteXL — Data Acquisition & Research Map
 
-Research date: 2026-10-08. This is the **presentation-focused first pass**: sections A (executive summary), C (top 25),
-F (India gap) and O (what to download first), plus the acquisition checklist. Sections B, D, E, G–N are planned for pass 2.
+Research date: 2026-10-08. Pass 1 wrote sections A, C, F, O and the checklist. Pass 2 (same day) re-checked the
+PARTIAL / UNVERIFIED rows against primary pages and added sections B, D, E and G–N. The **Pass 2 corrections** list
+below records every status or fact that changed.
 
 **How to read the status column.** `VERIFIED` means the source page itself was opened and the stated facts were read
 from it. `PARTIAL` means the resource was confirmed to exist via its official page or paper, but some details (file
@@ -56,7 +57,7 @@ into five groups:
 - **Eka medical-records parsing validation set** (India): 288 images of Indian lab reports and prescriptions. VERIFIED.
   This is the most direct real-world evaluation set found.
 - **NRCeS FHIR IG for ABDM v6.5.0** and the HL7 FHIR validator. VERIFIED / PARTIAL.
-- **LOINC 2.82** (109,325 concepts) with the Consumer Name file. VERIFIED.
+- **LOINC 2.83** (released 2026-08-19, 112,405 concepts) with the Consumer Name file. VERIFIED.
 - **SNOMED CT India Drug Extension** ("Common Drug Codes for India"), latest release notes dated 2026-08-31, free to
   affiliates in India via MLDS. PARTIAL.
 - **Indian medicine catalogues** on Kaggle (195k–250k+ rows, with salt composition). UNVERIFIED (seen via mirrors);
@@ -64,7 +65,7 @@ into five groups:
 
 ### Recommended acquisition order (summary of Section O)
 
-NRCeS package + validator → NidaanKosha → Eka validation set → LOINC 2.82 → Indian medicine catalogue (licence check
+NRCeS package + validator → NidaanKosha → Eka validation set → LOINC 2.83 → Indian medicine catalogue (licence check
 first) → Jan Aushadhi + NLEM lists → SNOMED CT India (MLDS) → handwriting sets → Synthea → credentialed US corpora
 (MIMIC-IV-Note, n2c2) for research.
 
@@ -80,26 +81,26 @@ Ranked by expected improvement to ByteXL, weighted toward India-specific and imm
 | 2 | HL7 FHIR Validator (`validator_cli.jar`) | Tool | No | PARTIAL |
 | 3 | NidaanKosha-100k-V1.0 | Dataset | Yes | VERIFIED |
 | 4 | Eka medical_records_parsing_validation_set | Dataset (eval) | Yes | VERIFIED |
-| 5 | LOINC 2.82 | Terminology | No (used in ABDM) | VERIFIED |
+| 5 | LOINC 2.83 | Terminology | No (used in ABDM) | VERIFIED |
 | 6 | Indian medicine catalogues (Kaggle: A-Z Medicine Dataset of India; Indian Medicine Data) | Dataset | Yes | UNVERIFIED |
 | 7 | SNOMED CT India Drug Extension (Common Drug Codes for India) | Terminology | Yes | PARTIAL |
 | 8 | SNOMED CT International Edition via NRCeS/MLDS | Terminology | Licensed via India NRC | VERIFIED (licensing) |
 | 9 | PMBJP (Jan Aushadhi) product list | Reference list | Yes | PARTIAL |
-| 10 | National List of Essential Medicines (NLEM) 2022 | Reference list | Yes | PARTIAL |
+| 10 | National List of Essential Medicines (NLEM) 2022 | Reference list | Yes | PARTIAL (PDF located) |
 | 11 | UCUM | Terminology | No | PARTIAL |
 | 12 | ICD-11 MMS 2026 + ICD-API | Terminology / API | No | PARTIAL |
 | 13 | Doctor's Handwritten Prescription BD dataset v2 | Dataset | South Asia (Bangladesh) | VERIFIED |
 | 14 | MIRAGE public subset (100 handwritten medical records) | Dataset | Yes (simulated) | VERIFIED |
-| 15 | ClinOCR-Bench | Benchmark | No | PARTIAL |
+| 15 | ClinOCR-Bench | Benchmark | No | VERIFIED |
 | 16 | IndianDrugMCQA | Benchmark | Yes | VERIFIED |
 | 17 | Synthea | Synthetic generator | No (US) | PARTIAL |
 | 18 | RxNorm | Terminology | No (US) | PARTIAL |
 | 19 | MIMIC-IV-Note 2.2 | Dataset (credentialed) | No (US) | PARTIAL |
 | 20 | n2c2 2018 Track 2 (medication extraction) | Dataset (DUA) | No (US) | PARTIAL |
 | 21 | IFCC multicentre study of Indian reference intervals | Paper | Yes | PARTIAL |
-| 22 | CoRIL (English–Hindi Health domain) | Dataset | Yes | UNVERIFIED |
+| 22 | CoRIL (English–Hindi Health domain) | Dataset | Yes | PARTIAL |
 | 23 | MedMCQA-Indic | Dataset (QA) | Yes | PARTIAL |
-| 24 | Patient-summary hallucination dataset (arXiv 2402.15422) | Dataset + paper | No | PARTIAL |
+| 24 | Patient-summary hallucination dataset (PhysioNet `ann-pt-summ`) | Dataset (credentialed) | No | VERIFIED |
 | 25 | MedRepBench | Benchmark (not yet released) | No (Chinese) | PARTIAL |
 
 ### Details
@@ -157,19 +158,22 @@ Ranked by expected improvement to ByteXL, weighted toward India-specific and imm
   directly computable. Either score against the rubrics or hand-label fields for a subset.
 - *Usage:* held-out test set only. Never tune prompts on it.
 
-**5. LOINC 2.82** — Terminology, Tier 1.
-- *Contains:* 109,325 concepts (97,314 active), 1,077 new in 2.82. Released February 2026, with the next release
-  scheduled for August 2026. `Loinc_2.82.zip` (~85 MB) needs a free account. Accessory files include ConsumerName.csv
-  (alpha status) and per-language LinguisticVariants. There is no Hindi variant listed in the results I saw.
-  [Release highlights](https://loinc.org/?p=486053) · [Release notes](https://loinc.org/kb/loinc-release-notes) ·
+**5. LOINC 2.83** — Terminology, Tier 1.
+- *Contains:* 2.83 was released 2026-08-19 with about 3,080 new concepts (about 1,260 of them drug/toxicology) and
+  112,405 total; the next release is listed for February 2027. The LOINC FHIR Terminology Service has been updated to
+  2.83 ([forum](https://forum.loinc.org/t/loinc-terminology-service-updated-for-version-2-83/3136)). The previous
+  release, 2.82 (February 2026), had 109,325 concepts (97,314 active). Downloads need a free account; the 2.82 zip was
+  ~85 MB. Accessory files include ConsumerName.csv (alpha status) and per-language LinguisticVariants. There is no Hindi
+  variant listed in the results I saw.
+  [loinc.org](https://loinc.org/) · [Release notes](https://loinc.org/kb/loinc-release-notes) ·
   [Getting LOINC](https://loinc.org/get-started/getting-loinc/)
 - *Module:* LOINC mapping, FHIR Observation coding.
 - *Usage:* reference. Confirm the 51 existing codes are active, and pull display names, units and classes.
 - *Caveat:* LOINC says Consumer Names are for display only and must not be used for mapping local terms to LOINC.
-- *Version note:* an August 2026 release was scheduled; I did not confirm whether 2.83 has shipped. Check before pinning.
 
-**6. Indian medicine catalogues on Kaggle** — Datasets, Tier 3/4. UNVERIFIED (seen via the baselight.app mirror;
-the Kaggle pages were not opened).
+**6. Indian medicine catalogues on Kaggle** — Datasets, Tier 3/4. UNVERIFIED. They were seen via the baselight.app
+mirror; in pass 2 the Kaggle pages returned only their titles to the fetch tool, so licence, row count and update date
+are still unconfirmed. Open them in a logged-in browser before use.
 - [A-Z Medicine Dataset of India](https://baselight.app/u/kaggle/dataset/shudhanshusingh_az_medicine_dataset_of_india)
   (shudhanshusingh): "250K+" allopathy products with prices as of November 2022.
 - [Indian Medicine Data](https://baselight.app/u/kaggle/dataset/mohneesh7_indian_medicine_data) (mohneesh7):
@@ -212,7 +216,9 @@ the Kaggle pages were not opened).
 **10. NLEM 2022** — Reference list, Tier 1. PARTIAL.
 - *Contains:* 384 medicines in 27 therapeutic categories, tagged Primary, Secondary or Tertiary. Launched 13 Sept 2022.
   It is also the basis of the DPCO Schedule I price controls.
-- *Source:* official PDF on mohfw.gov.in (exact URL not confirmed); summarised by
+- *Source:* a copy of the PDF is hosted by the National Health Systems Resource Centre at
+  [qps.nhsrcindia.org/.../nlem2022.pdf](https://qps.nhsrcindia.org/sites/default/files/2022-09/nlem2022.pdf) (located,
+  not opened). No mohfw.gov.in or cdsco.gov.in URL was found. Summarised by
   [BioVoice](https://biovoicenews.com/384-drugs-included-in-nlem-2022-34-new-drugs-added/).
 - *Usage:* a coverage target. Every NLEM generic should resolve in ByteXL's medicine table.
 
@@ -249,12 +255,17 @@ the Kaggle pages were not opened).
   before redistributing.
 - *Note:* this is the closest public material to Indian doctor handwriting found.
 
-**15. ClinOCR-Bench** (July 2026) — Benchmark, Tier 2. PARTIAL.
-- *Contains:* 384 scanned clinical images, free of protected health information, in 6 subsets: Normal, Handwriting,
-  Poor Quality, Rotation, Tables and Mix-artifacts. Template-aware train/test split.
-  [arXiv 2607.03650](https://arxiv.org/abs/2607.03650) · github.com/ClinOCR-Bench/ClinOCR-Bench (the repo was not opened).
+**15. ClinOCR-Bench** (July 2026) — Benchmark, Tier 2. VERIFIED.
+- *Contains:* 384 scanned clinical documents from 16 templates, free of protected health information, in 6 subsets of
+  64: normal, handwriting, poor, rotated, tables and mixed. 56 exemplars are held out for one-shot use and 328 are
+  scored.
+  - Ground truth is a human-audited transcription per document. The repo does not mention bounding boxes or
+    line/word levels.
+  - MIT licence. Available as a GitHub release zip (no account needed) or via
+    `load_dataset("ClinOCR-Bench/ClinOCR-Bench", "<subset>")`.
+  - [GitHub](https://github.com/ClinOCR-Bench/ClinOCR-Bench) · [arXiv 2607.03650](https://arxiv.org/abs/2607.03650)
 - *Module:* OCR robustness across failure modes (blur, rotation, tables).
-- *Weakness:* US-style documents; licence and format still to be checked.
+- *Weakness:* US-style documents; transcription only, so no box-level (IoU) scoring.
 
 **16. IndianDrugMCQA** (Eka Care) — Benchmark, Tier 3. VERIFIED.
 - *Contains:* 1,512 brand → generic or salt-composition multiple-choice questions across 20+ therapeutic classes.
@@ -263,9 +274,11 @@ the Kaggle pages were not opened).
   ByteXL's medicine table.
 
 **17. Synthea** — Synthetic generator, Tier 1 (open source). PARTIAL.
-- *Contains:* lifelong synthetic patients, exported as FHIR R4 (bulk ndjson optional), C-CDA and CSV. Needs Java 11+.
-  [github.com/synthetichealth/synthea](https://github.com/synthetichealth/synthea) — the latest release tag was not
-  confirmed.
+- *Contains:* lifelong synthetic patients, exported as FHIR R4 (bulk ndjson optional), C-CDA and CSV.
+  - The latest numbered release is **v4.0.0** (dated "05 Mar"; the year is not shown on the page). It adds US Core 7 to
+    the R4 exporter and **requires JDK 17+**.
+  - A rolling `master-branch-latest` build is dated "18 Aug".
+  - [Releases](https://github.com/synthetichealth/synthea/releases)
 - *Module:* timeline, trends and reconciliation load tests; FHIR round-tripping.
 - *Weaknesses:*
   - The data is US-centric (Massachusetts demographics, US Core, RxNorm).
@@ -304,11 +317,14 @@ the Kaggle pages were not opened).
 - *Use:* cite these as the source for ranges, and record per-row provenance in `lab_tests.csv`. ByteXL should keep
   preferring the **range printed on the report** and fall back to table ranges only when none is printed.
 
-**22. CoRIL** — Dataset, Tier 2/3. UNVERIFIED.
-- *Contains:* parallel corpora for 11 Indian language pairs across domains including Health, bidirectional.
+**22. CoRIL** — Dataset, Tier 2/3. PARTIAL.
+- *Contains:* 772,000 sentence pairs across 11 languages in Government, Health and General domains, with Hindi as the
+  pivot language. CC BY 4.0. Hosted at
+  [HimangY/CoRil-Parallel](https://huggingface.co/datasets/HimangY/CoRil-Parallel) with an EN-HI folder.
   [arXiv 2509.19941](https://arxiv.org/pdf/2509.19941)
 - *Use:* Hindi phrasing for the curated meanings and terminology; it could become a Hindi glossary seed.
-- *Weakness:* the licence and the exact Hugging Face repository were not verified.
+- *Weakness:* the `HLT` folder is probably the Health subset, but this is inferred, not stated. The size of the Health
+  EN–HI subset is not confirmed.
 
 **23. MedMCQA-Indic** (Eka Care) — Dataset, Tier 3. PARTIAL.
 - *Contains:* ~50.2k items including Hindi, MIT licence.
@@ -316,11 +332,17 @@ the Kaggle pages were not opened).
 - *Use:* Hindi medical vocabulary only. It is exam QA, so do **not** use it for the explanation style (diagnostic
   framing).
 
-**24. Patient-summary hallucination dataset** — Dataset + paper, Tier 2. PARTIAL.
-- *Contains:* described as the first public dataset labelling hallucinations in patient summaries.
-  [arXiv 2402.15422](https://arxiv.org/html/2402.15422v1)
-- *Use:* the evaluation design for summary grounding: unsupported-claim rate and invented numbers.
-- *Unconfirmed:* where it is hosted and under what access terms (UNVERIFIED).
+**24. Patient-summary hallucination dataset** (`ann-pt-summ` 1.0.0, PhysioNet) — Dataset, Tier 1/2, credentialed.
+VERIFIED.
+- *Contains:* span-level hallucination annotations by two medical annotators for 100 doctor-written and 100
+  LLM-generated patient summaries. Each source is a MIMIC-IV-Note Brief Hospital Course, released as
+  Hallucinations-MIMIC-DI and Hallucinations-Generated-DI. Code at
+  [stefanhgm/patient_summaries_with_llms](https://github.com/stefanhgm/patient_summaries_with_llms).
+  [PhysioNet](https://physionet.org/content/ann-pt-summ/) · [arXiv 2402.15422](https://arxiv.org/html/2402.15422v1)
+- *Use:* the annotation scheme (span offsets and error types) for ByteXL's own summary-grounding test set; run its
+  checker on these summaries as an external sanity check.
+- *Weakness:* needs PhysioNet credentialing. The authors note that "hallucinations" in doctor-written summaries are
+  often legitimate added knowledge.
 
 **25. MedRepBench** (Baidu, 2025) — Benchmark, **not released**. PARTIAL.
 - *Contains:* ~1,900 real Chinese medical report images, with fields for name, value, unit, reference range and
@@ -359,7 +381,7 @@ Patient-style tabular sets add little to ByteXL's pipeline.
 | Layer | Recommended | Genuinely India-specific? |
 |---|---|---|
 | ABDM / Indian FHIR | NRCeS FHIR IG for ABDM 6.5.0 + package; HL7 validator | IG: **yes**. Validator: no (generic tool). |
-| Terminology | SNOMED CT International + India Drug Extension via NRCeS/MLDS; LOINC 2.82; UCUM | India Drug Extension: **yes**. LOINC, UCUM: no (used in India). |
+| Terminology | SNOMED CT International + India Drug Extension via NRCeS/MLDS; LOINC 2.83; UCUM | India Drug Extension: **yes**. LOINC, UCUM: no (used in India). |
 | Indian medicines | Kaggle catalogues (licence check) → cross-checked with Jan Aushadhi + NLEM 2022 | **Yes** |
 | Indian lab formats | NidaanKosha-100k; Eka validation set | **Yes** |
 | Indian prescriptions | Eka validation set; MIRAGE subset; ByteXL synthetic generator | **Yes** (MIRAGE is simulated) |
@@ -381,7 +403,7 @@ Patient-style tabular sets add little to ByteXL's pipeline.
    - Expand `lab_tests.csv` with human-reviewed aliases and record the source on each row.
 3. **Eka medical_records_parsing_validation_set** (accept the gate on Hugging Face). Keep it as the held-out real-world
    test set; hand-label fields for about 50 images to compute field F1.
-4. **LOINC 2.82** (free account). Verify the active status and display names of the codes ByteXL uses.
+4. **LOINC 2.83** (free account). Verify the active status and display names of the codes ByteXL uses.
 5. **One Indian medicine catalogue** (licence review first) → parse salts into ingredients and strengths → a
    `medicines_extended.csv` gated by a cross-check against **Jan Aushadhi (2,110)** and **NLEM 2022 (384)**.
 6. **SNOMED CT via MLDS.** Register now (4–5 business days); then add the India Drug Extension codes to
@@ -403,7 +425,7 @@ Patient-style tabular sets add little to ByteXL's pipeline.
 
 ### Next (after the MVP)
 
-- LOINC 2.82 audit; UCUM mapping table for Indian units.
+- LOINC 2.83 audit; UCUM mapping table for Indian units.
 - Medicine catalogue expansion with licence review; Jan Aushadhi / NLEM cross-check; IndianDrugMCQA coverage metric.
 - Synthea-driven longitudinal tests; ClinOCR-Bench robustness evaluation.
 - Per-row range provenance in `lab_tests.csv` (report-printed range first; Indian studies cited where used).
@@ -430,7 +452,7 @@ Patient-style tabular sets add little to ByteXL's pipeline.
 [ ] Discharge summaries              synthetic generator; MIMIC-IV-Note (credentialed, US)
 [ ] OCR annotations                  ClinOCR-Bench (format to confirm)
 [ ] Bounding boxes                   gap: none confirmed for Indian documents
-[ ] LOINC                            2.82 (free account)
+[ ] LOINC                            2.83 (free account)
 [ ] UCUM                             ucum.org essence file (to confirm) + Indian unit map
 [ ] SNOMED CT                        MLDS via NRCeS (free in India)
 [ ] ICD                              ICD-11 2026 / ICD-API
@@ -451,10 +473,324 @@ Patient-style tabular sets add little to ByteXL's pipeline.
 [ ] Ground-truth datasets            gap: hand-label ~50 Eka images to field level
 ```
 
-## Pass 2 (not yet done)
 
-- Sections B, D, E, G, H, I, J, K, L, M and N.
-- Primary-source checks for every PARTIAL / UNVERIFIED row: Kaggle licences, the ClinOCR-Bench repo, the UCUM essence
-  file, the Synthea release tag, the NLEM PDF URL, the NRCeS `package.tgz` URL, and whether LOINC 2.83 has shipped.
-- Document-layout datasets (DocLayNet, PubTabNet and others), CDSCO and NPPA structured sources, and Hindi
-  patient-education material.
+---
+
+# Part 2 — remaining sections (pass 2)
+
+## Pass 2 corrections
+
+| Item | Pass 1 said | Pass 2 found |
+|---|---|---|
+| LOINC | 2.82 is current | **2.83 released 2026-08-19**, 112,405 concepts; next release February 2027 |
+| ClinOCR-Bench | PARTIAL, licence unknown | VERIFIED: MIT, 6×64 documents, transcription ground truth, no boxes, GitHub zip or Hugging Face |
+| NRCeS IG downloads | `package.tgz` URL from the forum only | VERIFIED on the downloads page: `package.tgz`, `definitions.{json,xml}.zip`, `examples.{json,xml}.zip` for `ndhm.in#6.5.0` |
+| Synthea | release unknown | v4.0.0 (US Core 7, **JDK 17+**); the year is not shown on the releases page |
+| CoRIL | UNVERIFIED | PARTIAL: CC BY 4.0, 772k pairs, HF `HimangY/CoRil-Parallel`; Health folder inferred |
+| Patient-summary hallucinations | hosting unknown | VERIFIED: PhysioNet `ann-pt-summ` 1.0.0 (credentialed), 100 + 100 annotated summaries |
+| NLEM 2022 PDF | URL unknown | Located at qps.nhsrcindia.org (NHSRC); no MoHFW/CDSCO URL found |
+| Kaggle medicine catalogues | UNVERIFIED | Still UNVERIFIED; the pages do not render for the fetch tool |
+| UCUM essence file | URL unknown | Still PARTIAL: ucum.org points to its spec page and `github.com/ucum-org/ucum`; no file URL confirmed |
+
+## Section B — Master dataset table
+
+Abbreviations — **R/S**: real or synthetic. **Img**: images included. **Ann**: annotations. **Q**: quality tier (1
+official … 5 low). **St**: status (V verified, P partial, U unverified). Component names follow Section D.
+
+| Pri | Resource | Type | Country | R/S | Img | Ann | Size | Format | Lang | Access / licence | Q | St | ByteXL component |
+|---|---|---|---|---|---|---|---|---|---|---|---|---|---|
+| 1 | NRCeS FHIR IG for ABDM 6.5.0 | IG | IN | — | — | profiles, examples | 8 document profiles + resource profiles | package.tgz, JSON/XML zips | en | open | 1 | V | FHIR, ABDM |
+| 1 | HL7 FHIR validator | Tool | — | — | — | — | jar | Java | — | open | 1 | V | FHIR validation |
+| 1 | NidaanKosha-100k-V1.0 | Dataset | IN | R (machine-extracted) | no | test, value, unit, range, specimen, LOINC, age, sex | 6,844,304 readings / 100k reports | Parquet 176 MB | en | open, CC BY-SA 4.0 | 3 | V | Normalization, LOINC, trends |
+| 1 | Eka medical records validation set | Dataset | IN | R | yes | rubrics, doc type | 288 images | HF dataset | en | gated, MIT | 3 | V | Evaluation (end to end) |
+| 1 | LOINC 2.83 | Terminology | — | — | — | — | 112,405 concepts | CSV zip | multi (no hi) | free account | 1 | V | LOINC |
+| 2 | Indian medicine catalogues (Kaggle) | Dataset | IN | R (scraped) | no | composition, manufacturer, price | 11.8k–250k+ rows | CSV | en | Kaggle; licence unknown | 3–4 | U | Medicine mapping |
+| 2 | SNOMED CT India Drug Extension | Terminology | IN | — | — | concepts, relationships | not stated | RF2 | en | MLDS affiliate (free in IN) | 1 | P | Medicine coding, FHIR |
+| 2 | SNOMED CT International | Terminology | — | — | — | — | not checked | RF2 | en | MLDS affiliate | 1 | V | Conditions, FHIR |
+| 2 | PMBJP product list | Reference list | IN | — | — | drug code, name, unit | 2,110 medicines (31.12.2025) | PDF | en | open | 1 | P | Medicine mapping |
+| 2 | NLEM 2022 | Reference list | IN | — | — | category, level of care | 384 medicines | PDF | en | open | 1 | P | Medicine coverage |
+| 2 | CDSCO approved-new-drug lists | Reference list | IN | — | — | drug, indication, date | year-wise | PDF | en | open | 1 | P | Medicine mapping (new molecules) |
+| 2 | UCUM | Terminology | — | — | — | — | not checked | XML | en | open (terms on ucum.org) | 1 | P | Units |
+| 3 | ICD-11 MMS 2026 + API | Terminology / API | — | — | — | — | not checked | spreadsheet, REST | multi | CC BY-ND 3.0 IGO | 1 | P | Conditions |
+| 3 | RxNorm | Terminology | US | — | — | — | monthly | RRF | en | UMLS licence (free) | 1 | P | Ingredient model |
+| 2 | Handwritten Prescription BD v2 | Dataset | BD | R | yes | class label | 4,680 crops, 78 classes | PNG + CSV/XLSX | en | CC BY 4.0 | 2 | V | Handwriting OCR evaluation |
+| 2 | MIRAGE public subset | Dataset | IN | S (simulated) | yes | none | 100 images | JPEG | en? | HF, no licence stated | 3 | V | Handwriting stress test |
+| 2 | ClinOCR-Bench | Benchmark | US | S (templated) | yes | transcription | 384 docs | images + text | en | MIT | 2 | V | OCR robustness |
+| 3 | IndianDrugMCQA | Benchmark | IN | — | no | MCQ answers | 1,512 items | HF | en | MIT | 3 | V | Brand→generic evaluation |
+| 3 | Synthea v4.0.0 | Generator | US | S | no | — | unlimited | FHIR R4, CSV, C-CDA | en | Apache-2.0 (not re-checked) | 1 | P | Timeline, trends, reconciliation |
+| 3 | HL7 FHIR R4 examples | Reference | — | S | no | — | all resource examples | examples(-json).zip | en | open | 1 | V | FHIR mapping tests |
+| 4 | MIMIC-IV 3.1 | Dataset | US | R | no | structured EHR | 223,452 patients (hosp module, per one summary) | CSV | en | credentialed | 1 | P | Longitudinal research |
+| 4 | MIMIC-IV-Note 2.2 | Dataset | US | R | no | — | 331,794 discharge summaries | CSV | en | credentialed | 1 | P | Discharge research |
+| 4 | eICU-CRD 2.0 | Dataset | US | R | no | structured ICU | 200k+ ICU admissions | CSV | en | credentialed | 1 | P | Longitudinal (ICU) |
+| 4 | n2c2 2018 Track 2 | Dataset | US | R | no | medication + 7 attributes, ADE | not checked | BRAT | en | DUA | 1 | P | Dosing extraction evaluation |
+| 4 | ann-pt-summ | Dataset | US | R + generated | no | hallucination spans | 200 summaries | JSON | en | credentialed | 1 | V | Summary-grounding evaluation |
+| 3 | CoRIL | Dataset | IN | R | no | parallel | 772k pairs (all domains) | text | 11 incl. hi | CC BY 4.0 | 2 | P | Hindi |
+| 4 | MedMCQA-Indic | Dataset | IN | R (translated) | no | MCQ | ~50.2k | HF | hi + others | MIT | 3 | P | Hindi vocabulary |
+| 4 | MMCQS / MedSumm | Dataset | IN | partly S | yes | summaries | not checked | — | Hinglish | release announced, not confirmed | 2 | U | Hinglish |
+| 4 | IFCC Indian reference intervals | Paper | IN | R | — | — | 512 adults, 33 analytes | paper | en | journal | 2 | P | Reference ranges |
+| 5 | DocLayNet v1.1 | Dataset | — | R | yes | 11 layout classes, boxes | 80,863 pages | COCO / HF | en | CDLA-Permissive-1.0 | 2 | P | Layout (generic) |
+| 5 | PubTabNet | Dataset | — | R | yes | table HTML (structure + cell text) | 568k tables | JSONL + PNG | en | not confirmed | 2 | P | Table structure (generic) |
+| 5 | FUNSD | Dataset | — | R | yes | entities, links, boxes | 199 forms | JSON + PNG | en | not confirmed | 2 | P | Key-value forms (generic) |
+| — | MedRepBench | Benchmark | CN | R | yes | name/value/unit/range/flag | ~1,900 | — | zh | **not released** | 2 | P | Methodology only |
+
+## Section D — Data by ByteXL component
+
+| Layer | What ByteXL has | Resources to add | Role |
+|---|---|---|---|
+| Ingestion | 5 synthetic files (PDF text, scan, photo, JPG, PNG) | Eka validation set; ClinOCR-Bench (poor, rotated); MIRAGE subset | Evaluation inputs |
+| OCR | PaddleOCR PP-OCRv5 mobile | ClinOCR-Bench (transcriptions per subset); BD handwriting crops | CER/WER evaluation |
+| Document classification | keyword rules + LLM fallback | Eka validation set (`document_type` column) | Accuracy on real layouts |
+| Extraction | vision LLM + rules fallback | Eka set (rubrics, plus our hand labels); n2c2 2018 attribute scheme; PubTabNet/FUNSD for the table and key-value ideas | Evaluation; schema design |
+| Pydantic validation | strict schemas | — (internal) | — |
+| Normalization (units, ranges) | 51 tests, hand-written ranges | NidaanKosha units and printed ranges; UCUM; IFCC India study | Reference data |
+| LOINC | 51 codes | LOINC 2.83 table; NidaanKosha `test_name`→`loinc` pairs (581 codes) | Reference + alias mining |
+| Medicine mapping | 103 brands | Kaggle catalogues (licence permitting); PMBJP 2,110; NLEM 384; CDSCO lists; SNOMED CT India Drug Extension; IndianDrugMCQA for evaluation | Reference + evaluation |
+| FHIR | R4B models, NRCeS profile tags | HL7 R4 examples; HL7 validator | Validation |
+| ABDM | document-bundle export | NRCeS IG 6.5.0 package, definitions and examples | Validation + reference |
+| Summary | LLM prose + deterministic checks; curated EN/HI meanings | ann-pt-summ annotation scheme; CoRIL Health for Hindi phrasing | Evaluation design; language |
+| Timeline | per-patient documents | Synthea patients rendered into documents | Load and correctness tests |
+| Trends | per-LOINC series | NidaanKosha value distributions (for realistic synthetic series); Synthea Observations | Test data |
+| Medication reconciliation | combination-aware duplicate alerts | Kaggle salt compositions (combination products); SNOMED CT India Drug Extension ingredients | Reference |
+
+## Section E — Dataset gap analysis
+
+| Gap | Current state | Target | Source to close it |
+|---|---|---|---|
+| Real document types | 0 real documents | ≥50 hand-labelled real Indian docs (labs + prescriptions) | Eka validation set |
+| Real discharge summaries | 1 synthetic | 20+ realistic Indian-style | Synthetic generation from NRCeS DischargeSummaryRecord structure; no Indian public set found |
+| Lab tests | 51 | top ~200 LOINC codes by Indian frequency | NidaanKosha frequency ranking + LOINC 2.83 |
+| Lab aliases | hand-written | frequency-ranked, human-reviewed variants per code | NidaanKosha `test_name` |
+| Indian units | a few conversions | every unit seen ≥N times mapped to UCUM | NidaanKosha `unit` column |
+| Medicine mappings | 103 brands | 10k–50k brands with parsed ingredients | Kaggle catalogue (licence) cross-checked with PMBJP/NLEM |
+| Prescription handwriting | 1 neat italic sample | labelled real handwriting at page level | MIRAGE subset (hand-label); BD crops for names only |
+| Demographic variation | 1 adult male patient | multiple ages and both sexes | NidaanKosha (age, sex); Synthea |
+| Languages | EN + curated HI | reviewed EN–HI glossary for the top tests/medicines | CoRIL Health + manual review |
+| Hinglish | none | advice-line phrases ("khaane ke baad") | No public set found; collect locally |
+| Layouts | 5 templates | dozens of real templates | Eka set; ClinOCR-Bench (16 templates) |
+| Longitudinal data | 1 patient, 5 docs | 50+ synthetic patients over years | Synthea → rendered documents |
+| FHIR examples | own output only | official examples to diff against | HL7 R4 examples; NRCeS examples zip |
+| ABDM examples | none | NRCeS example bundles for each document type | NRCeS `examples.json.zip` |
+| Evaluation sets | synthetic truth only | a held-out real set + robustness set + grounding set | Eka; ClinOCR-Bench; ByteXL grounding set (Section M) |
+
+## Section G — Training vs evaluation data
+
+ByteXL does not fine-tune models today, so "training" means prompt examples, rules and reference tables.
+
+| Split | Resources | Rule |
+|---|---|---|
+| **Training / adaptation** (if fine-tuning ever happens) | BD handwriting crops (CC BY 4.0); CoRIL Health (CC BY 4.0); NidaanKosha (for synthetic report generation); Synthea output; ByteXL synthetic generator | Never include anything from the test row |
+| **Validation** (development) | ByteXL synthetic samples + truth; ClinOCR-Bench *train* split (56 exemplars); 20% of the Eka set if we hand-label it | Tune prompts and thresholds here only |
+| **Test** (isolated) | Eka validation set (remaining 80%); ClinOCR-Bench *test* split (328); IndianDrugMCQA; MIRAGE subset after labelling | Run once per release; never inspect errors to tune prompts without moving items to validation |
+| **Reference** | LOINC 2.83; UCUM; SNOMED CT + India Drug Extension; RxNorm; ICD-11; PMBJP; NLEM; NRCeS IG; HL7 examples | Version-pinned in `datasets/metadata/versions.json` |
+| **Ground truth** | ByteXL synthetic truth; our hand labels on Eka and MIRAGE images; ann-pt-summ spans (external) | Two-person review for hand labels |
+
+## Section H — Recommended data volumes
+
+| Data | Hackathon MVP (now) | Strong research prototype | Production-scale research | Why |
+|---|---|---|---|---|
+| Lab reports (evaluated) | 5 synthetic + ~25 real (Eka) | 300 real, ≥20 labs/templates | 3,000+ with consent | Template diversity matters more than count |
+| Prescriptions (printed) | 2 synthetic + ~25 real | 200 real | 2,000+ | Brand and notation variety |
+| Handwritten prescriptions | 1 + 20 MIRAGE (hand-labelled) | 300 page-level labelled | 5,000+ | The hardest case; every drug/dose is confirm-queued anyway |
+| Discharge summaries | 1–5 synthetic | 100 (synthetic + any real with consent) | 1,000+ | No public Indian source |
+| Medication records (dose lines) | ~30 | 1,000 annotated sig lines | 10,000+ | Sig grammar coverage |
+| Medicine products | 103 → 2,500 (PMBJP + NLEM + top brands) | 20,000 brands | 100k+ with periodic refresh | Long tail of Indian brands |
+| Lab terminology | 51 → 150 tests | 300 tests (top LOINC in NidaanKosha) | full LOINC lab subset | Indian labs use a few hundred tests most of the time |
+| FHIR records | 5 bundles validated | 500 validated | continuous validation in CI | Conformance is binary per bundle |
+| Hindi data | curated meanings for 51 tests | glossary for 300 tests + 500 medicines, reviewed | professional translation memory | Patient-facing text needs review, not volume |
+| Synthetic patients | 1 | 50 over 5–10 years | 10,000 | Exercises timeline and reconciliation logic |
+
+## Section I — Download / acquisition matrix
+
+| Resource | URL | Direct download | API | Registration | Format | Expected size | Extraction method | Automation |
+|---|---|---|---|---|---|---|---|---|
+| NRCeS IG 6.5.0 | nrces.in/ndhm/fhir/r4/downloads.html | YES | NO | NO | tgz, zip | UNKNOWN | unpack | YES |
+| HL7 validator | github.com/hapifhir/org.hl7.fhir.core/releases/latest/download/validator_cli.jar | YES | NO | NO | jar | UNKNOWN | Java CLI | YES |
+| HL7 R4 examples | hl7.org/fhir/R4/examples-json.zip | YES | NO | NO | zip | UNKNOWN | unzip | YES |
+| NidaanKosha | huggingface.co/datasets/ekacare/NidaanKosha-100k-V1.0 | YES | YES (HF) | NO | Parquet | 176 MB | pandas / datasets | YES |
+| Eka validation set | huggingface.co/datasets/ekacare/medical_records_parsing_validation_set | PARTIAL | YES (HF) | YES (gate) | HF | UNKNOWN | datasets + token | PARTIAL |
+| LOINC 2.83 | loinc.org/downloads | PARTIAL | YES (FHIR terminology service) | YES | CSV zip | ~85 MB (2.82) | unzip + CSV | PARTIAL |
+| Kaggle medicine catalogues | kaggle.com/datasets/... | PARTIAL | YES (Kaggle API) | YES | CSV | UNKNOWN | kaggle CLI | YES |
+| SNOMED CT (+ India Drug Ext.) | mlds.ihtsdotools.org (via NRCeS) | NO | NO | YES (affiliate licence, 4–5 days) | RF2 | UNKNOWN | RF2 loader | PARTIAL |
+| PMBJP list | static.pib.gov.in (PDF) | YES | NO | NO | PDF | small | PDF table extraction | PARTIAL |
+| NLEM 2022 | qps.nhsrcindia.org/.../nlem2022.pdf | YES | NO | NO | PDF | small | PDF table extraction | PARTIAL |
+| CDSCO approvals | cdsco.gov.in (Approved New Drugs) | YES | NO | NO | PDF | small | PDF table extraction | PARTIAL |
+| UCUM | ucum.org / github.com/ucum-org/ucum | UNKNOWN | NO | NO | XML | small | XML parse | YES |
+| ICD-11 | icd.who.int/icdapi | PARTIAL | YES | YES (API client id) | spreadsheet / JSON | UNKNOWN | REST | YES |
+| RxNorm | nlm.nih.gov/research/umls/rxnorm | PARTIAL | YES (RxNav) | YES (UMLS) | RRF | UNKNOWN | RRF parse | YES |
+| BD handwriting | data.mendeley.com/datasets/zjjtptvn6f | YES | NO | NO | PNG + CSV | UNKNOWN | unzip | YES |
+| MIRAGE subset | huggingface.co/datasets/tavishm/100-handwritten-medical-records | YES | YES (HF) | NO | JPEG | 37.8 MB | datasets | YES |
+| ClinOCR-Bench | github.com/ClinOCR-Bench/ClinOCR-Bench | YES | YES (HF) | NO | images + text | UNKNOWN | release zip | YES |
+| IndianDrugMCQA | huggingface.co/datasets/ekacare/indian_drug_mcqa | YES | YES (HF) | UNKNOWN | HF | small | datasets | YES |
+| Synthea | github.com/synthetichealth/synthea | YES | NO | NO | FHIR JSON / CSV | grows with patients | run jar (JDK 17+) | YES |
+| CoRIL | huggingface.co/datasets/HimangY/CoRil-Parallel | YES | YES (HF) | NO | text | UNKNOWN | datasets | YES |
+| MIMIC-IV / -Note, eICU, ann-pt-summ | physionet.org | NO | NO | YES (credentialing, CITI, DUA) | CSV / JSON | multi-GB | wget with credentials | PARTIAL |
+| n2c2 2018 | n2c2.dbmi.hms.harvard.edu | NO | NO | YES (DUA) | BRAT | UNKNOWN | manual | NO |
+| DocLayNet / PubTabNet / FUNSD | HF / GitHub / author page | YES | PARTIAL | NO | COCO / JSONL / JSON | GBs (DocLayNet, PubTabNet) | datasets / unzip | YES |
+
+## Section J — Automated ingestion plan
+
+All downloads go under `datasets/` (Section K), which stays **git-ignored**. Only small, licence-compatible, derived
+reference tables (with a `source` column) are copied into `data/reference/`. A future `scripts/fetch_data.py` would
+wrap these steps and record each version in `datasets/metadata/versions.json`.
+
+| Resource | Method | Then |
+|---|---|---|
+| NRCeS IG | `curl -LO https://nrces.in/ndhm/fhir/r4/package.tgz` (relative link on the downloads page; confirm it resolves) and `examples.json.zip` | Unpack to `datasets/abdm/nrces-6.5.0/` |
+| Validator | `curl -LO https://github.com/hapifhir/org.hl7.fhir.core/releases/latest/download/validator_cli.jar` | `java -jar validator_cli.jar bundle.json -version 4.0.1 -ig datasets/abdm/nrces-6.5.0/package.tgz`; write pass rate to the eval report |
+| NidaanKosha | `datasets.load_dataset("ekacare/NidaanKosha-100k-V1.0")` or `huggingface-cli download` | Group by `loinc`, rank `test_name` and `unit` variants → `datasets/loinc/alias_candidates.csv` for human review |
+| Eka validation set | Accept the gate in a browser, then `huggingface-cli login` + `load_dataset` | Save images to `datasets/evaluation/eka_validation/`; labels go to `annotations/` |
+| LOINC 2.83 | Manual download after login (licence acceptance) | `datasets/terminology/loinc/2.83/`; join on code to verify ByteXL's codes are ACTIVE |
+| Kaggle catalogues | `kaggle datasets download -d <owner>/<slug>` after the licence check | Parse salt strings into ingredient + strength; keep a `source` column |
+| PMBJP / NLEM / CDSCO | `curl -LO` the PDFs | `pdfplumber` / PyMuPDF table extraction → CSV; manual spot check |
+| SNOMED CT | MLDS web download (manual) | RF2 → SQLite; extract drug concepts from the India Drug Extension |
+| ClinOCR-Bench | GitHub release zip or `load_dataset("ClinOCR-Bench/ClinOCR-Bench", subset)` | Run ByteXL OCR → CER/WER per subset |
+| MIRAGE, BD, IndianDrugMCQA, CoRIL | `load_dataset` / Mendeley zip | Store under their sections |
+| Synthea | `git clone`, `./run_synthea -p 50` (JDK 17+) | Render FHIR output into PDFs/images with the sample generator; keep FHIR as ground truth |
+| PhysioNet sets | `wget -r -N -c -np --user <user> --ask-password https://physionet.org/files/<project>/<version>/` after credentialing | Research only; never committed |
+
+## Section K — Proposed ByteXL data directory
+
+```
+datasets/                         git-ignored; large or licence-restricted
+├── abdm/nrces-6.5.0/             package.tgz, definitions, examples
+├── fhir/hl7-r4-examples/
+├── terminology/
+│   ├── loinc/2.83/
+│   ├── snomed/international/  snomed/in-drug-extension/
+│   ├── rxnorm/<yyyymmdd>/
+│   ├── icd11/2026-01/
+│   └── ucum/
+├── medications/
+│   ├── kaggle/<slug>/            raw CSV + licence note
+│   ├── pmbjp/  nlem/  cdsco/     PDFs + extracted CSV
+│   └── indian_drug_mcqa/
+├── lab/nidaankosha/              raw parquet + derived alias/unit/range candidates
+├── documents/
+│   ├── eka_validation/           images (gated; do not redistribute)
+│   ├── mirage_subset/
+│   ├── handwriting_bd/
+│   └── clinocr_bench/
+├── layout/doclaynet/  pubtabnet/  funsd/
+├── multilingual/coril/  medmcqa_indic/
+├── synthetic/synthea/<run-id>/   FHIR + rendered documents
+├── physionet/                    credentialed; research only
+├── annotations/                  ByteXL hand labels (schema: Section L)
+├── evaluation/                   frozen test manifests + results
+└── metadata/versions.json        source, URL, version, date, licence, sha256 per resource
+data/reference/                   committed; small, reviewed, with a source column per row
+```
+
+## Section L — Data schemas
+
+These schemas extend what ByteXL already stores (`app/schemas.py`) with provenance fields needed for evaluation.
+
+**Common fields** (every annotated field):
+
+```json
+{
+  "document_id": "",
+  "source_dataset": "eka_validation | mirage_subset | bytexl_synthetic | ...",
+  "page": 1,
+  "field": "results[3].value",
+  "raw_text": "",
+  "value": null,
+  "bbox": [0, 0, 0, 0],
+  "bbox_space": "page_pixels@200dpi",
+  "ocr_confidence": 0.0,
+  "confidence": 0.0,
+  "verified": false,
+  "annotator": "",
+  "reviewed_by": ""
+}
+```
+
+**Lab report:** `document_id, facility, referring_doctor, collected_on, reported_on, patient{name, age_years, sex},
+results[{printed_name, canonical_name, loinc, value, value_text, unit, ucum_unit, printed_range, ref_low, ref_high,
+flag_printed, flag_computed, specimen, bbox}]`
+
+**Prescription / handwritten prescription:** `prescriber, registration, facility, date, complaints[], diagnoses[],
+medicines[{printed_name, brand, generic[], strength, form, dosage_raw, schedule{morning, noon, night, prn},
+timing_raw, food_relation, duration_raw, duration_days, instructions, bbox}], advice[], follow_up, handwritten:
+bool, handwriting_scope: none|partial|full`
+
+**Discharge summary:** `facility, attending_doctor, admission_date, discharge_date, diagnoses[], presenting_complaints[],
+hospital_course, procedures[], investigations[<lab result>], discharge_medicines[<medicine>], allergies[],
+follow_up, advice[]`
+
+**Medicine (reference CSV):** `brand, generic, ingredients[{name, strength, unit}], form, route, manufacturer,
+snomed_ct_in, rxnorm_ingredient, atc, source, source_version, verified`
+
+**Patient / Encounter / Observation:** follow FHIR R4 Patient, Encounter and Observation with NRCeS profiles; keep a
+`derived_from: {document_id, field_path}` extension so every Observation traces back to its page and box.
+
+**OCR box:** `{document_id, page, line_id, text, confidence, polygon[[x,y]x4], bbox[x0,y0,x1,y1]}`
+
+**Confidence annotation:** `{field, model_confidence, ocr_match, ocr_confidence, retry_penalty, final, reason,
+queued_for_confirmation: bool}`
+
+**Summary grounding annotation** (modelled on ann-pt-summ):
+`{summary_id, lang, spans[{start, end, text, error_type: invented_number|invented_date|invented_medicine|
+changed_dose|unsupported_diagnosis|unsupported_inference|missing_abnormal|wrong_normalization}]}`
+
+## Section M — Evaluation benchmark design
+
+| Task | Metric | Formula | Test set |
+|---|---|---|---|
+| Document classification | accuracy, macro-F1 | correct / total | Eka (document_type) + synthetic |
+| OCR | CER, WER | edit distance / reference length | ClinOCR-Bench per subset; BD crops (word accuracy) |
+| Field extraction | field P / R / F1, exact match, normalized exact match | P = correct / predicted, R = correct / expected | hand-labelled Eka subset + synthetic truth (existing `scripts/eval.py`) |
+| Bounding boxes | mean IoU, % fields with IoU ≥ 0.5 | area(∩) / area(∪) | hand-labelled subset (needs boxes; none public) |
+| Lab normalization | flag accuracy; unit-conversion exact match | correct flags / results | synthetic + NidaanKosha-derived cases |
+| LOINC mapping | top-1 accuracy, coverage | correct codes / mapped tests | NidaanKosha pairs (after human review) |
+| Brand → generic | accuracy, coverage | correct generic / brands queried | IndianDrugMCQA converted to lookups |
+| Dosage interpretation | per-slot exact match (morning/noon/night/PRN, food relation, duration days) | correct slots / slots | hand-built sig-line set (≥300 Indian notations) |
+| FHIR generation | validation pass rate; error count per bundle | bundles with 0 errors / bundles | all generated bundles vs NRCeS 6.5.0 |
+| Summary grounding | unsupported-claim rate; invented-number/date/medicine rates; abnormal coverage | flagged spans / summaries; covered abnormal / abnormal | ByteXL grounding set annotated with Section L schema; ann-pt-summ for external comparison |
+| Hindi | reviewer adequacy/fluency (1–5); terminology accuracy; Devanagari ratio | mean score; correct terms / terms | 100 summaries reviewed by a Hindi speaker |
+| Medication reconciliation | duplicate-detection P / R | true alerts / alerts; true alerts / true duplicates | Synthea + synthetic multi-document patients with planted duplicates (incl. combinations) |
+
+**Hallucination rate** = summaries with ≥1 unsupported span / summaries. Report the safety checker's own rejection rate
+separately from the post-checker rate, so the checker's value is visible.
+
+## Section N — Failure-mode data
+
+| Failure mode | Where it exists | Gap / recommendation |
+|---|---|---|
+| Blurry / low-quality photos | ClinOCR-Bench `poor`; Eka set (real photos, likely) | Add phone photos taken under poor light with consent |
+| Skew / rotation | ClinOCR-Bench `rotated` | ByteXL deskew already; measure on this subset |
+| Low contrast, shadows, folds | ClinOCR-Bench `mixed` (artifact types not itemised) | Augment synthetic samples (shadow, fold, JPEG artefacts) |
+| Stamps, signatures | Not confirmed in any set | Add to synthetic generator |
+| Handwriting | ClinOCR-Bench `handwriting`; MIRAGE subset; BD crops | No Indian page-level labelled set; hand-label MIRAGE |
+| Crossed-out medicines | None found | Synthetic: render strike-through lines; expect the confirm queue to catch them |
+| Abbreviations (OD/BD/TDS/HS/SOS) | Indian prescriptions only (MIRAGE, Eka) | Build the sig-line test set (Section M) |
+| Unusual units (lakh/cumm, mill/cumm) | NidaanKosha `unit` | Mine and map to UCUM |
+| Missing reference ranges | NidaanKosha (`display_ranges` nullable) | Test the fallback to table ranges |
+| Multiple languages | none for Hindi/English medical documents | Collect locally |
+| Tables | ClinOCR-Bench `tables`; PubTabNet (generic) | Measure row-reconstruction errors |
+| Multi-page reports | not confirmed in any set | Synthetic two-page lab reports |
+| Duplicate medicines | ByteXL samples (metformin in two documents) | Plant more in Synthea-derived patients |
+| Conflicting lab values | none | Synthetic: same test twice in one report with different values |
+| Incomplete documents | none | Synthetic: crop headers/footers |
+
+## Sources added in pass 2
+
+- [LOINC home (2.83)](https://loinc.org/) · [LOINC 2.83 terminology service](https://forum.loinc.org/t/loinc-terminology-service-updated-for-version-2-83/3136)
+- [ClinOCR-Bench GitHub](https://github.com/ClinOCR-Bench/ClinOCR-Bench)
+- [NRCeS downloads](https://nrces.in/ndhm/fhir/r4/downloads.html)
+- [Synthea releases](https://github.com/synthetichealth/synthea/releases) · [v4.0.0](https://github.com/synthetichealth/synthea/releases/tag/v4.0.0)
+- [HL7 FHIR R4 downloads](https://hl7.org/fhir/R4/downloads.html)
+- [CoRIL on Hugging Face](https://huggingface.co/datasets/HimangY/CoRil-Parallel) · [CoRIL on AIKosh](https://aikosh.indiaai.gov.in/home/datasets/details/coril_parallel.html)
+- [ann-pt-summ (PhysioNet)](https://physionet.org/content/ann-pt-summ/)
+- [NLEM 2022 PDF (NHSRC)](https://qps.nhsrcindia.org/sites/default/files/2022-09/nlem2022.pdf)
+- [CDSCO Approved New Drugs](https://cdsco.gov.in/opencms/en/Approval_new/Approved-New-Drugs/)
+- [MIMIC-IV](https://physionet.org/content/mimiciv/) · [eICU-CRD 2.0](https://physionet.org/content/eicu-crd/2.0/)
+- [MedSumm / MMCQS (Hinglish)](https://arxiv.org/pdf/2401.01596) · [IHQID healthcare intents](https://arxiv.org/pdf/2302.09685)
+- [DocLayNet v1.1](https://huggingface.co/datasets/docling-project/DocLayNet-v1.1/blob/main/README.md) · [PubTabNet](https://arxiv.org/abs/1911.10683v1) · [FUNSD](https://arxiv.org/pdf/1905.13538)
+- [UCUM](https://ucum.org/)
+
+## Still open after pass 2
+
+- Kaggle catalogue licences and row counts (open the pages in a logged-in browser).
+- UCUM essence file URL and version; SNOMED CT India Drug Extension size and brand coverage.
+- Licences for PubTabNet and FUNSD; Synthea licence and release year.
+- Whether the MedSumm/MMCQS Hinglish dataset was actually released.
