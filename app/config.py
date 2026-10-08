@@ -58,6 +58,7 @@ class Settings(BaseSettings):
     hindi_summary_mode: str = "template"
 
     api_url: str = "http://127.0.0.1:8000"
+    demo_notice: str = ""
 
     @property
     def uploads_dir(self) -> Path:

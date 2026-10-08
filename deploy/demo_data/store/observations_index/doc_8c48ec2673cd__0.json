@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:0", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "1558-6", "name": "Fasting Blood Sugar", "value": 118.0, "unit": "mg/dL", "printed_value": 118.0, "printed_unit": "mg/dL", "date": "2024-09-20", "flag": "high", "ref_low": 70.0, "ref_high": 100.0, "panel": "Glucose"}

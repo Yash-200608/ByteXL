@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:4", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "2093-3", "name": "Total Cholesterol", "value": 198.0, "unit": "mg/dL", "printed_value": 198.0, "printed_unit": "mg/dL", "date": "2024-09-20", "flag": "normal", "ref_low": null, "ref_high": 200.0, "panel": "Lipid"}

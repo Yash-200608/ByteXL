@@ -49,6 +49,27 @@ Other commands: `make test` (pytest), `make eval` (field-level accuracy), `make 
 
 `scripts/mock_ollama.py` is a stand-in that serves Ollama's `/api/tags` and `/api/chat` on port 11434. It is **not a model**. For the five bundled samples it replays their reference answers from `tests/fixtures/synthetic_truth/`. For any other document it answers with the rules extractor. Summaries are composed from the validated JSON and still go through every safety check. OCR, normalization, FHIR and the UI all run for real. Health reports `mock-ollama:stand-in` among the installed models. Stop the mock and start real Ollama before the eval numbers or a live demo mean anything.
 
+## Live demo and deployment
+
+PERRY is built to run on the user's own device, so health data never leaves it. That shapes how it is shared:
+
+- **Cloud demo (always on):** a Docker container, for example on a free Hugging Face Space. It runs the API and the UI
+  together with the synthetic demo patient pre-loaded.
+  - Free cloud machines have no GPU, so the local models are switched off there and PERRY uses its rule-based
+    fallbacks: rules extraction, template summaries, and the rule-based chat router. All safety checks still apply.
+  - A banner on every page says so. Uploads work, but every field goes to the confirm queue.
+  - Publish: create a Space with the Docker SDK, then run `.\deploy\push_hf.ps1 -Space <user>/<space>` and sign in
+    with a Hugging Face access token when git asks.
+  - Configuration: `Dockerfile` (the `DEMO_NOTICE` setting holds the banner text); the demo data is in
+    `deploy/demo_data/`.
+- **Full version with live AI:** run PERRY on a machine with Ollama and the models (`.\run.ps1 demo`), then run
+  `.\deploy\share.ps1`. It opens a public HTTPS link to that machine through Tailscale Funnel; Funnel must be allowed once
+  in the Tailscale admin console. The link works while the machine is on; `.\deploy\share.ps1 -Stop` closes it.
+- **Self-hosted:** `docker build -t perry . && docker run -p 7860:7860 perry`. Remove the demo `ENV` lines and set
+  `OLLAMA_URL` to an Ollama server to use the real models.
+
+Only synthetic data belongs on a public link: the app has no login, so anyone with the URL can see and upload.
+
 ## Architecture
 
 ![ByteXL pipeline](docs/architecture.png)

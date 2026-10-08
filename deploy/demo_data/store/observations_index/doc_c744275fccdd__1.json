@@ -1,0 +1,1 @@
+{"_id": "doc_c744275fccdd:1", "patient_id": "pat_ed3801969aa3", "document_id": "doc_c744275fccdd", "loinc": "2823-3", "name": "Serum Potassium", "value": 3.3, "unit": "mmol/L", "printed_value": 3.3, "printed_unit": "mmol/L", "date": "2024-06-05", "flag": "low", "ref_low": 3.5, "ref_high": 5.1, "panel": "Electrolytes"}

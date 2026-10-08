@@ -1,0 +1,1 @@
+{"_id": "doc_d03af62db27d:1", "patient_id": "pat_ed3801969aa3", "document_id": "doc_d03af62db27d", "loinc": "6690-2", "name": "Total Leucocyte Count", "value": 7800.0, "unit": "/µL", "printed_value": 7800.0, "printed_unit": "/cumm", "date": "2024-03-12", "flag": "normal", "ref_low": 4000.0, "ref_high": 11000.0, "panel": "CBC"}

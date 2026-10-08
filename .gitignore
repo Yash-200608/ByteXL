@@ -9,3 +9,4 @@ data/store/
 data/cache/
 *.egg-info/
 .streamlit/secrets.toml
+demo/

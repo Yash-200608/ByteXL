@@ -1,0 +1,1 @@
+{"_id": "doc_c744275fccdd:0", "patient_id": "pat_ed3801969aa3", "document_id": "doc_c744275fccdd", "loinc": "2951-2", "name": "Serum Sodium", "value": 132.0, "unit": "mmol/L", "printed_value": 132.0, "printed_unit": "mmol/L", "date": "2024-06-05", "flag": "low", "ref_low": 135.0, "ref_high": 145.0, "panel": "Electrolytes"}

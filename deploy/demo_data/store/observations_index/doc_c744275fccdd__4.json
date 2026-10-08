@@ -1,0 +1,1 @@
+{"_id": "doc_c744275fccdd:4", "patient_id": "pat_ed3801969aa3", "document_id": "doc_c744275fccdd", "loinc": "2345-7", "name": "Random Blood Sugar", "value": 212.0, "unit": "mg/dL", "printed_value": 212.0, "printed_unit": "mg/dL", "date": "2024-06-05", "flag": "high", "ref_low": 70.0, "ref_high": 140.0, "panel": "Glucose"}

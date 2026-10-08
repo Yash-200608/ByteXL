@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:5", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "13457-7", "name": "LDL Cholesterol", "value": 124.0, "unit": "mg/dL", "printed_value": 124.0, "printed_unit": "mg/dL", "date": "2024-09-20", "flag": "high", "ref_low": null, "ref_high": 100.0, "panel": "Lipid"}

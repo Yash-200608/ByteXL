@@ -23,6 +23,7 @@ def health():
     installed = llm.models() if up else []
     return {
         "status": "ok",
+        "demo_notice": s.demo_notice,
         "store": {"backend": repo.backend, "ok": repo.ping()},
         "ollama": {"reachable": up, "url": s.ollama_url},
         "models": {

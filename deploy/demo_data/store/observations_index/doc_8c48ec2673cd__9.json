@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:9", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "2132-9", "name": "Vitamin B12", "value": 210.0, "unit": "pg/mL", "printed_value": 210.0, "printed_unit": "pg/mL", "date": "2024-09-20", "flag": "low", "ref_low": 211.0, "ref_high": 911.0, "panel": "Vitamins"}

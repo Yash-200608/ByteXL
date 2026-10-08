@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:8", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "62292-8", "name": "Vitamin D (25-OH)", "value": 18.0, "unit": "ng/mL", "printed_value": 18.0, "printed_unit": "ng/mL", "date": "2024-09-20", "flag": "low", "ref_low": 30.0, "ref_high": 100.0, "panel": "Vitamins"}

@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:6", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "2085-9", "name": "HDL Cholesterol", "value": 41.0, "unit": "mg/dL", "printed_value": 41.0, "printed_unit": "mg/dL", "date": "2024-09-20", "flag": "normal", "ref_low": 40.0, "ref_high": null, "panel": "Lipid"}

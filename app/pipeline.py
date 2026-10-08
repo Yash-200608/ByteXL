@@ -43,7 +43,7 @@ def create_document(patient_id: str, filename: str, data: bytes) -> dict:
         "sha256": sha,
         "sha1_b64": base64.b64encode(hashlib.sha1(data).digest()).decode(),
         "size": len(data),
-        "path": str(path),
+        "path": path.as_posix(),
         "status": {"stage": "stored", "state": "queued", "message": None, "timings": {}},
         "document_type": None,
         "classification": None,

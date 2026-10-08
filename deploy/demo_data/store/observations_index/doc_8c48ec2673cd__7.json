@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:7", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "3016-3", "name": "TSH", "value": 5.8, "unit": "µIU/mL", "printed_value": 5.8, "printed_unit": "uIU/mL", "date": "2024-09-20", "flag": "high", "ref_low": 0.4, "ref_high": 4.5, "panel": "Thyroid"}

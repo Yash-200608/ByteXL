@@ -1,0 +1,1 @@
+{"_id": "doc_d03af62db27d:6", "patient_id": "pat_ed3801969aa3", "document_id": "doc_d03af62db27d", "loinc": "4548-4", "name": "HbA1c", "value": 7.2, "unit": "%", "printed_value": 7.2, "printed_unit": "%", "date": "2024-03-12", "flag": "high", "ref_low": 4.0, "ref_high": 5.6, "panel": "Glucose"}

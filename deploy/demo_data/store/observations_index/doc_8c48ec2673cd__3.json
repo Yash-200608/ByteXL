@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:3", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "2160-0", "name": "Serum Creatinine", "value": 1.0, "unit": "mg/dL", "printed_value": 1.0, "printed_unit": "mg/dL", "date": "2024-09-20", "flag": "normal", "ref_low": 0.7, "ref_high": 1.3, "panel": "KFT"}

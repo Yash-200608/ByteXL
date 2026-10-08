@@ -208,9 +208,12 @@ def header(patient: dict | None):
                 else:
                     st.markdown("You're all clear. Nothing needs your attention right now.")
     with c4:
-        online = _health() is not None
+        h = _health()
+        online = h is not None
         st.markdown(f'<div class="p-head-ava" title="{html.escape(patient["name"])}">{html.escape(initials(patient["name"]))}</div>'
                     f'<div class="p-online">{"<b></b>PERRY ONLINE" if online else "OFFLINE"}</div>', unsafe_allow_html=True)
+    if h and h.get("demo_notice"):
+        st.markdown(f'<div class="p-demo">{html.escape(h["demo_notice"])}</div>', unsafe_allow_html=True)
     if st.session_state.pop("p-search-go", False):
         st.switch_page("views/perry.py")
 

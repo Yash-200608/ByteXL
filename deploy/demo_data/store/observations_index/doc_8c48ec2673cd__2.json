@@ -1,0 +1,1 @@
+{"_id": "doc_8c48ec2673cd:2", "patient_id": "pat_ed3801969aa3", "document_id": "doc_8c48ec2673cd", "loinc": "1742-6", "name": "SGPT (ALT)", "value": 42.0, "unit": "U/L", "printed_value": 42.0, "printed_unit": "U/L", "date": "2024-09-20", "flag": "high", "ref_low": 0.0, "ref_high": 41.0, "panel": "LFT"}

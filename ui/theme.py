@@ -92,6 +92,8 @@ div[class*="st-key-p-search"] input {{border-radius: 999px !important; backgroun
 div[class*="st-key-p-bell"] button, .p-head-ava {{border-radius: 50% !important; width: 46px; height: 46px; min-height: 46px;
   background: var(--p-glass2) !important; border: 1px solid var(--p-border) !important;}}
 .p-head-ava {{display: grid; place-items: center; font-weight: 800; color: #04363A; background: radial-gradient(circle at 35% 30%, #9FFBF1, #19BFB1) !important;}}
+.p-demo {{margin: .2rem 0 .6rem; padding: 8px 16px; border-radius: 14px; font-size: .9rem; color: #FFE3BF;
+  background: rgba(247, 148, 29, .14); border: 1px solid rgba(247, 148, 29, .5);}}
 .p-online {{font-size: .72rem; letter-spacing: .12em; color: var(--p-cyan2); text-align: center;}}
 .p-online b {{display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #22C55E; margin-right: 6px; box-shadow: 0 0 8px #22C55E;}}
 

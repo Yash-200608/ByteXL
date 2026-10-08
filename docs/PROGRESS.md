@@ -260,3 +260,20 @@ extraction, English LLM summaries), 209 tests passing (`.venv/bin/pytest -q`), r
       - Result: 300 passed, 1 skipped.
     - **Known gaps:** mobile and tablet widths and real-microphone checks are not verified yet. The lounge art is not
       used yet.
+38. Deployment: a cloud demo plus a live tunnel.
+    - **Cloud demo:**
+      - A Docker image (`Dockerfile`, `deploy/start.sh`) runs the API and the UI in one container on port 7860.
+      - Free hosts have no GPU, so it runs in the rule-based modes (rules extraction, template summaries, template
+        PERRY) with Ollama unreachable.
+      - The `DEMO_NOTICE` setting, exposed through `/health`, shows a banner on every page.
+      - The demo patient is a snapshot in `deploy/demo_data/`, copied into `DATA_DIR` on first start.
+    - **Paths:** uploads now store POSIX paths, and the snapshot's Windows paths were converted, so stored records
+      work on Linux.
+    - **Live AI:** `deploy/share.ps1` publishes a machine running the real models through Tailscale Funnel.
+    - **Publishing:** `deploy/push_hf.ps1` publishes to a Hugging Face Space.
+    - **Verified locally** (no Docker on this PC): ran the container's settings from an isolated folder on other
+      ports.
+      - `/health` showed the notice; files and page images were served.
+      - Chat in English and Hindi, and the safety refusal, answered in under 0.1 s.
+      - An upload finished in 0.6 s.
+      - The UI rendered with the banner.
