@@ -53,15 +53,16 @@ Other commands: `make test` (pytest), `make eval` (field-level accuracy), `make 
 
 PERRY is built to run on the user's own device, so health data never leaves it. That shapes how it is shared:
 
-- **Cloud demo (always on):** a Docker container, for example on a free Hugging Face Space. It runs the API and the UI
-  together with the synthetic demo patient pre-loaded.
-  - Free cloud machines have no GPU, so the local models are switched off there and PERRY uses its rule-based
-    fallbacks: rules extraction, template summaries, and the rule-based chat router. All safety checks still apply.
-  - A banner on every page says so. Uploads work, but every field goes to the confirm queue.
-  - Publish: create a Space with the Docker SDK, then run `.\deploy\push_hf.ps1 -Space <user>/<space>` and sign in
-    with a Hugging Face access token when git asks.
-  - Configuration: `Dockerfile` (the `DEMO_NOTICE` setting holds the banner text); the demo data is in
-    `deploy/demo_data/`.
+- **Cloud demo (always on):** hosted free on Streamlit Community Cloud, with the synthetic demo patient pre-loaded.
+  - The entry point is `ui/cloud_app.py`. It starts the API inside the Streamlit process, copies `deploy/demo_data/` in
+    on first start, and switches PERRY to its no-GPU fallbacks: rules extraction, template summaries, and the rule-based
+    chat router, with all safety checks still applied.
+  - Its lighter dependency list is `ui/requirements.txt`; PaddleOCR and Whisper are left out, so photo OCR and on-device
+    voice recognition are off in the cloud.
+  - A banner on every page explains this; the `DEMO_NOTICE` setting holds its text.
+  - Deploy: on share.streamlit.io choose this repository, set the main file to `ui/cloud_app.py`, and pick Python 3.12.
+  - The same cloud mode also runs as a Docker image (`Dockerfile`, port 7860) on hosts that accept Docker, including the
+    full OCR stack.
 - **Full version with live AI:** run PERRY on a machine with Ollama and the models (`.\run.ps1 demo`), then run
   `.\deploy\share.ps1`. It opens a public HTTPS link to that machine through Tailscale Funnel; Funnel must be allowed once
   in the Tailscale admin console. The link works while the machine is on; `.\deploy\share.ps1 -Stop` closes it.

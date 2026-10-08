@@ -1,5 +1,6 @@
 import os
 import shutil
+import socket
 import sys
 import threading
 import time
@@ -25,7 +26,6 @@ CLOUD = {
 for key, value in CLOUD.items():
     os.environ.setdefault(key, value)
 
-import httpx
 import streamlit as st
 import uvicorn
 
@@ -44,9 +44,9 @@ def start_api():
     threading.Thread(target=server.run, daemon=True).start()
     for _ in range(120):
         try:
-            httpx.get(f"{os.environ['API_URL']}/health", timeout=2)
+            socket.create_connection((url.hostname, url.port), timeout=1).close()
             break
-        except httpx.HTTPError:
+        except OSError:
             time.sleep(0.5)
     return server
 

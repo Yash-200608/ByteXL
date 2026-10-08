@@ -277,3 +277,16 @@ extraction, English LLM summaries), 209 tests passing (`.venv/bin/pytest -q`), r
       - Chat in English and Hindi, and the safety refusal, answered in under 0.1 s.
       - An upload finished in 0.6 s.
       - The UI rendered with the banner.
+39. The cloud demo moved to Streamlit Community Cloud.
+    - **Why:** Hugging Face now requires PRO for Docker Spaces on free CPU, and the user chose Streamlit Community
+      Cloud instead.
+    - **Entry point:** `ui/cloud_app.py` starts uvicorn in a background thread, once per process via
+      `st.cache_resource`.
+      - It waits for the API's port to open, not for `/health`. On Windows, `/health`'s probe of the unreachable
+        Ollama address takes about 2 seconds to be refused.
+      - It applies the cloud settings unless they are already set, and seeds `data/` from `deploy/demo_data/`.
+    - **Dependencies:** `ui/requirements.txt` holds the slim, pinned list, without PaddleOCR or faster-whisper; both
+      are imported lazily, and OCR fails cleanly when PaddleOCR is missing.
+    - **Verified:** a fresh clone with a new Python 3.12 environment, installed from `ui/requirements.txt` only.
+      - The app started and seeded the demo patient.
+      - The banner showed, and a chat question went through the in-process API.
