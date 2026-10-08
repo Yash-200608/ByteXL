@@ -49,6 +49,11 @@ class Settings(BaseSettings):
     perry_result_chars: int = 6000
     perry_indic_mode: str = "translate"
     translate_model: str = "hf.co/fischerman/sarvam-translate-gguf:Q4_K_S"
+    stt_model: str = "small"
+    stt_device: str = "cpu"
+    stt_compute_type: str = "int8"
+    max_voice_seconds: int = 60
+    stt_vocab_prompt: bool = True
     summary_mode: str = "llm"
     hindi_summary_mode: str = "template"
 

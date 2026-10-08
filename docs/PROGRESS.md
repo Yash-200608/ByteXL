@@ -196,3 +196,37 @@ All phases done. Remaining by hand:
 
 State of the build machine at hand-off: MongoDB seeded with demo patient "Rahul Sharma" (5 documents, real-model
 extraction, English LLM summaries), 209 tests passing (`.venv/bin/pytest -q`), real-model eval overall F1 0.96.
+35. PERRY voice (`app/agent/speech.py`, `POST /patients/{id}/perry/voice`, `ui/perry_voice.py`,
+    `ui/components/perry_mic/`).
+    - Speech recognition, switchable in the UI:
+      - Local faster-whisper (`small`, int8, CPU) is the default: on-device and private. Measured on this PC with
+        SAPI-synthesised questions: transcripts were correct and took about 5 s each.
+      - The Chrome/Edge Web Speech API, through a no-build Streamlit component, is opt-in with a warning that audio goes
+        to Google or Microsoft.
+    - Speech output uses the browser's `speechSynthesis`, driven through `window.parent` so the user's click counts as
+      the activation that allows audio.
+      - Text is markdown-stripped and capped at 1,200 characters.
+      - Voice selection matches the reply's language; with no matching voice, PERRY stays silent (except English).
+    - The chat box uses `st.chat_input(accept_audio=True)`; its textarea height is capped with CSS because Streamlit
+      stretches it.
+    - The in-app preview pane denies microphone access and has no voices, so it can't play or record; real browsers are
+      fine.
+    - The install moved `huggingface-hub` from 2.1.1 to 1.33.0; the full suite, including the PaddleOCR slow tests, passes.
+    - Tests: `tests/test_voice.py` (12) plus one PERRY AppTest in `tests/test_ui.py`.
+36. Accent work for PERRY voice.
+    - **Speaking:**
+      - A no-build `perry_voices` component reports the browser's voices.
+      - `rank_voices` / `pick_voice` (`ui/perry_voice.py`) prefer an exact `-IN` locale (+100 / +40), then
+        natural or neural voices (+25), then known Indian voice names (+15). Online voices are allowed by default (user
+        choice), with an offline-only toggle.
+      - The picker covers English and Hinglish replies; other languages auto-pick their best voice.
+      - Speed (0.95) and pitch are adjustable.
+      - `pronounce()` rewrites units, dates, Tab/Cap/Syp, dose codes and `0-1-0` patterns before speaking. The date
+        rules run before the dose rule (a test caught ISO dates being split).
+    - **Listening:**
+      - The Whisper `initial_prompt` lists the user's own medicines, generics and tests first, then general brands.
+      - `correct_terms` snaps near-miss words to the user's own vocabulary only. Rules: ratio ≥ 65, first letter must
+        match, at least 5 letters, not a common word, and a clear winner. Common words score at most about 45.
+      - On SAPI-synthesised questions this took 4/4 to correct, where it was 3/4 before ("raziovas" → Rosuvas).
+      - The response returns `heard_raw` and `corrections`; the UI shows them under the voice bubble.
+    - Tests: 6 more in `tests/test_voice.py`.

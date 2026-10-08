@@ -1,7 +1,7 @@
 from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, File, HTTPException, Query, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, Query, UploadFile
 from fastapi.responses import FileResponse
 from pydantic import BaseModel, Field
 
@@ -262,3 +262,63 @@ def post_perry(patient_id: str, body: PerryIn):
     _patient(patient_id)
     reply = Perry(patient_id).respond(body.message, [t.model_dump() for t in body.history])
     return reply.to_dict()
+
+
+MAX_VOICE_UPLOAD = 10 * 1024 * 1024
+NO_SPEECH = "I couldn't hear that clearly. Please try again, or type your question."
+
+
+@router.post("/patients/{patient_id}/perry/voice")
+async def post_perry_voice(patient_id: str, audio: UploadFile = File(...), history: str = Form("[]")):
+    import json
+
+    from pydantic import TypeAdapter, ValidationError
+
+    from app.agent import Perry
+    from app.agent.speech import SpeechUnavailable, transcribe, wav_seconds
+    from app.config import get_settings
+
+    _patient(patient_id)
+    try:
+        turns = TypeAdapter(list[PerryTurn]).validate_python(json.loads(history or "[]"))
+    except (ValueError, ValidationError) as exc:
+        raise HTTPException(422, "history must be a JSON list of {role, content} turns") from exc
+    data = await audio.read()
+    if len(data) > MAX_VOICE_UPLOAD:
+        raise HTTPException(413, "The recording is larger than 10 MB.")
+    if data[:4] != b"RIFF" or data[8:12] != b"WAVE":
+        raise HTTPException(415, "Please send the recording as a WAV file.")
+    seconds = wav_seconds(data)
+    if seconds is not None and seconds > get_settings().max_voice_seconds:
+        raise HTTPException(413, f"Recordings can be at most {get_settings().max_voice_seconds} seconds long.")
+    try:
+        heard = transcribe(data, _voice_vocabulary(patient_id))
+    except SpeechUnavailable as exc:
+        raise HTTPException(503, f"Voice isn't set up on this device yet: {exc}") from exc
+    if not heard["text"]:
+        return {"reply": NO_SPEECH, "language": "en", "language_name": "English", "method": "composed", "intent": "voice",
+                "state": "no_speech", "tools": [], "sources": [], "transcript": "", "heard_language": heard["language"]}
+    reply = Perry(patient_id).respond(heard["text"], [t.model_dump() for t in turns[-20:]]).to_dict()
+    return {**reply, "transcript": heard["text"], "heard_raw": heard.get("raw_text"), "corrections": heard.get("corrections", []),
+            "heard_language": heard["language"], "stt_seconds": heard["duration_s"]}
+
+
+def _voice_vocabulary(patient_id: str) -> list[str]:
+    import re
+
+    from app.agent import PerryTools, ToolError
+
+    try:
+        tools = PerryTools(patient_id)
+        meds = tools.call("get_my_medications")["medicines"]
+        labs = tools.call("get_my_labs", {"limit": 50})["results"]
+    except ToolError:
+        return []
+    names = []
+    for m in meds:
+        brand = re.sub(r"^(?:Tab|Cap|Syp|Inj|Cream|Oint|Drops?)\.?\s+", "", m.get("name") or "", flags=re.I)
+        names.append(re.sub(r"\s+\d.*$", "", brand).strip())
+        if m.get("generic"):
+            names.append(m["generic"])
+    names += [r["name"] for r in labs]
+    return [n for n in dict.fromkeys(names) if n][:40]

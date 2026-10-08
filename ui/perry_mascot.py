@@ -96,9 +96,13 @@ div[class*="st-key-qa-"] button {border-radius:999px !important; border:1px soli
   background: rgba(20,184,166,.07) !important; padding: 4px 12px !important; min-height: 0 !important; transition: all .15s ease;}
 div[class*="st-key-qa-"] button:hover {background: rgba(20,184,166,.2) !important; transform: translateY(-1px);}
 div[class*="st-key-qa-"] button p {font-size:.86rem !important;}
+[data-testid="stChatInput"] textarea {height: auto !important; min-height: 1.6rem !important; max-height: 8rem !important; field-sizing: content;}
 [data-testid="stChatInput"] {border-radius: 22px !important; border: 1.5px solid rgba(20,184,166,.55) !important;
   box-shadow: 0 6px 24px rgba(14,165,233,.12);}
 .perry-foot {text-align:center; font-size:.75rem; opacity:.55; margin-top:6px;}
+div[class*="st-key-say-"] button {border-radius:999px !important; padding:0 10px !important; min-height:0 !important; height:28px;
+  border:1px solid rgba(20,184,166,.35) !important; background:transparent !important; margin-top:6px;}
+div[class*="st-key-say-"] button:hover {background: rgba(20,184,166,.15) !important;}
 .perry-langs {text-align:center; font-size:.8rem; opacity:.75; margin-top:12px; line-height:1.7;}
 div[class*="st-key-pmsg"] p, div[class*="st-key-pmsg"] li {unicode-bidi: plaintext; text-align: start;}
 @media (max-width: 640px) {.perry-name{font-size:2.3rem} div[class*="st-key-pmsg-user"]{max-width:92%}

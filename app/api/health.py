@@ -38,4 +38,5 @@ def health():
         },
         "ocr": {"paddleocr": importlib.util.find_spec("paddleocr") is not None, "pymupdf": importlib.util.find_spec("pymupdf") is not None},
         "extraction_mode": s.extraction_mode,
+        "speech": {"local_stt": importlib.util.find_spec("faster_whisper") is not None, "stt_model": s.stt_model},
     }

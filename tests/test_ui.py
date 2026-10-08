@@ -72,3 +72,26 @@ def test_timeline_shows_reconciliation_and_cards(ui_env):
     at.run()
     joined = " ".join(m.value for m in at.markdown)
     assert "Current medicines" in joined and "Prescription" in joined and "Lab report" in joined
+
+
+def test_perry_page_chats_and_has_voice_controls(ui_env):
+    from streamlit.testing.v1 import AppTest
+
+    from app.config import get_settings
+
+    get_settings().perry_mode = "template"
+    at = AppTest.from_file(str(UI / "views" / "perry.py"), default_timeout=60)
+    at.session_state["patient_id"] = ui_env
+    at.run()
+    assert not at.exception, [e.message for e in at.exception]
+    assert any("What can I help you find" in m.value for m in at.markdown)
+    assert [r.label for r in at.radio] == ["Speech recognition"] and at.toggle[0].value is True
+    next(b for b in at.button if "My medicines" in b.label).click().run()
+    at.run()
+    assert not at.exception, [e.message for e in at.exception]
+    joined = " ".join(m.value for m in at.markdown)
+    assert "Tab Glycomet 500" in joined
+    assert any(b.label == "🔊" for b in at.button)
+    at.radio[0].set_value("browser").run()
+    assert not at.exception, [e.message for e in at.exception]
+    assert "Language you will speak" in [s.label for s in at.selectbox]

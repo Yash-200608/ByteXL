@@ -1,0 +1,101 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  html, body { margin: 0; padding: 0; background: transparent; font-family: "Source Sans Pro", system-ui, sans-serif; }
+  .wrap { display: flex; align-items: center; gap: 10px; padding: 4px 2px; }
+  button { display: inline-flex; align-items: center; gap: 8px; border-radius: 999px; padding: 8px 16px; font-size: 15px;
+           cursor: pointer; border: 1.5px solid rgba(20,184,166,.6); background: rgba(20,184,166,.12); color: inherit; }
+  button.on { background: rgba(239,68,68,.15); border-color: rgba(239,68,68,.7); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { box-shadow: 0 0 0 0 rgba(239,68,68,.35); } 50% { box-shadow: 0 0 0 8px rgba(239,68,68,0); } }
+  .hint { font-size: 13px; opacity: .75; }
+  .err { color: #f87171; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <button id="mic" type="button">🎙️ <span id="label">Speak</span></button>
+  <span id="hint" class="hint">Browser speech recognition (sends audio to your browser's speech service)</span>
+</div>
+<script>
+const send = (type, extra) => window.parent.postMessage(Object.assign({ isStreamlitMessage: true, type }, extra || {}), "*");
+let lang = "en-IN";
+let rec = null;
+let listening = false;
+let finalText = "";
+const btn = document.getElementById("mic");
+const label = document.getElementById("label");
+const hint = document.getElementById("hint");
+let theme = null;
+
+function setHeight() { send("streamlit:setFrameHeight", { height: document.body.scrollHeight + 4 }); }
+
+function applyTheme(t) {
+  if (!t) return;
+  document.body.style.color = t.textColor || "inherit";
+}
+
+window.addEventListener("message", (event) => {
+  const d = event.data || {};
+  if (d.type === "streamlit:render") {
+    lang = (d.args && d.args.lang) || lang;
+    if (!theme && d.theme) { theme = d.theme; applyTheme(theme); }
+    setHeight();
+  }
+});
+
+const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+if (!Recognition) {
+  btn.disabled = true;
+  hint.textContent = "Speech recognition isn't supported in this browser. Use Chrome or Edge, or switch to on-device recognition.";
+  hint.classList.add("err");
+}
+
+function stop() {
+  listening = false;
+  btn.classList.remove("on");
+  label.textContent = "Speak";
+}
+
+btn.addEventListener("click", () => {
+  if (!Recognition) return;
+  if (listening && rec) { rec.stop(); return; }
+  finalText = "";
+  rec = new Recognition();
+  rec.lang = lang;
+  rec.interimResults = true;
+  rec.maxAlternatives = 1;
+  rec.continuous = false;
+  rec.onstart = () => { listening = true; btn.classList.add("on"); label.textContent = "Listening… tap to stop"; hint.classList.remove("err"); hint.textContent = ""; };
+  rec.onresult = (e) => {
+    let interim = "";
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) finalText += r[0].transcript; else interim += r[0].transcript;
+    }
+    hint.textContent = (finalText + " " + interim).trim();
+  };
+  rec.onerror = (e) => {
+    hint.classList.add("err");
+    hint.textContent = e.error === "not-allowed" ? "Microphone permission was denied." :
+                       e.error === "no-speech" ? "I didn't hear anything. Try again." : "Speech recognition error: " + e.error;
+    stop();
+  };
+  rec.onend = () => {
+    stop();
+    const text = finalText.trim();
+    if (text) {
+      hint.textContent = "“" + text + "”";
+      send("streamlit:setComponentValue", { value: { text, nonce: Date.now() }, dataType: "json" });
+    }
+    setHeight();
+  };
+  rec.start();
+});
+
+send("streamlit:componentReady", { apiVersion: 1 });
+setHeight();
+</script>
+</body>
+</html>

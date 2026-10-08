@@ -21,6 +21,7 @@ switch ($Task) {
         if (-not (Test-Path $Py)) { py -3.11 -m venv .venv }
         & $Py -m pip install --upgrade pip
         & $Py -m pip install -r requirements.txt
+        & $Py -c "from faster_whisper import WhisperModel; WhisperModel('small', device='cpu', compute_type='int8'); print('Whisper speech model ready')"
         if (-not (Test-Path ".env")) { Copy-Item ".env.example" ".env" }
     }
     "mock" { & $Py scripts/mock_ollama.py @Rest }

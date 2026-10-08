@@ -98,6 +98,26 @@ prescribed most recently?". It lives in `app/agent/` and reuses ByteXL's existin
   - If the translator isn't installed, PERRY answers in English with a one-line note.
   - Model: `TRANSLATE_MODEL`. `PERRY_INDIC_MODE=translate|llm|english`; `llm` asks the text model to reply directly.
     `PERRY_HINDI_MODE=translate` uses the translator for Hindi too.
+- **Voice:** tap the mic in PERRY's chat box to ask out loud. The spoken question goes through the same agent, so all of the
+  account-scoping and safety rules still apply. Two speech-recognition engines, switchable under **🎙️ Voice**:
+  - *On this device* (default): `faster-whisper` (`STT_MODEL=small`, int8 on CPU) transcribes the recording, which never
+    leaves the machine. It takes about 5 seconds per question on a 4-core i5. Endpoint: `POST /patients/{id}/perry/voice`
+    (WAV, up to 60 s). Strongest in English and Hindi.
+  - *Browser*: the Chrome/Edge Web Speech API, through a small built-in component. It covers more Indian languages, but the
+    browser sends the audio to Google or Microsoft, and the UI says so.
+  - Answers are read aloud with the browser's own voices (`speechSynthesis`, in the reply's language): automatically for
+    voice questions, and on demand with 🔊 on any reply. If the browser has no voice for that language, PERRY stays silent
+    rather than reading in the wrong language.
+  - **Indian accent:**
+    - PERRY ranks the browser's voices for each reply language: an exact `-IN` locale first (e.g. `en-IN`, `hi-IN`),
+      then natural or neural voices, then known Indian voice names such as Neerja, Prabhat, Swara, Madhur and Heera.
+    - **🎙️ Voice** has a voice picker, speed and pitch, a "Hear PERRY" preview, and a toggle for online natural voices,
+      which are on by default. Edge sends their text to Microsoft, and Chrome to Google.
+    - Before speaking, text is rewritten for natural pronunciation: units in words ("mg/dL" → "milligrams per decilitre"),
+      dates, Tab → Tablet, dose codes spelled out, `0-1-0` read as numbers.
+    - For an offline Indian voice on Windows: Settings → Time & language → Speech → Add voices → English (India) and Hindi.
+  - **Understanding Indian accents:** Whisper is primed with the current user's own medicine and test names. Near-miss
+    words, such as "raziovas", are then snapped to those names ("Rosuvas"), and only to those. The UI shows each correction.
 - **Settings:** `PERRY_MODE=llm|template`; `PERRY_HINDI_MODE=template|llm` controls Devanagari replies (template by default, for the same
   reason as the summaries).
 - **API:** `POST /patients/{id}/perry` with `{"message": "...", "history": [...]}`. The patient in the path stands in for the logged-in
