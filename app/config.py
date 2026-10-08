@@ -16,14 +16,14 @@ class Settings(BaseSettings):
     data_dir: Path = ROOT / "data"
 
     ollama_url: str = "http://localhost:11434"
-    vision_model: str = "qwen2.5vl:7b"
-    vision_fallback_model: str = "qwen2.5vl:3b"
+    vision_model: str = "qwen2.5vl:3b"
+    vision_fallback_model: str = "qwen2.5vl:7b"
     text_model: str = "qwen2.5:7b"
     extraction_mode: str = "vision"
     llm_timeout_s: float = 900.0
     llm_num_ctx: int = 8192
     llm_temperature: float = 0.0
-    vision_max_side: int = 1280
+    vision_max_side: int = 1024
     vision_slow_threshold_s: float = 90.0
 
     ocr_lang: str = "en"
@@ -42,6 +42,7 @@ class Settings(BaseSettings):
     active_med_default_days: int = 90
     reconcile_as_of: str = "latest_document"
     summary_on_upload: bool = True
+    summary_mode: str = "llm"
 
     api_url: str = "http://localhost:8000"
 

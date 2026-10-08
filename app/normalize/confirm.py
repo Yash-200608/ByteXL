@@ -118,7 +118,7 @@ def _label(ex, path: str) -> str:
         except (AttributeError, IndexError):
             pass
     if parts[0] == "patient":
-        return f"Patient {leaf.lower()}"
+        return {"name": "Patient name", "age_years": "Patient age", "sex": "Patient sex", "identifier": "Patient ID"}.get(parts[-1], "Patient")
     if len(parts) == 2 and parts[1].isdigit():
         return f"{parts[0].replace('_', ' ').capitalize()} #{int(parts[1]) + 1}"
     return leaf

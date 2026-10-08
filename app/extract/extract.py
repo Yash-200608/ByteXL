@@ -56,7 +56,7 @@ def extract(doc_type: str, pages: list[PageData], mode: str | None = None):
     text = page_text(pages)
     start = time.time()
     errors: list[str] = []
-    modes = [mode] + (["text"] if mode == "vision" else [])
+    modes = [] if mode == "rules" else [mode] + (["text"] if mode == "vision" else [])
     for m in modes:
         try:
             res = _run_llm(doc_type, m, pages, text)

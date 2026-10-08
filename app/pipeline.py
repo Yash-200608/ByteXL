@@ -107,7 +107,7 @@ def finalize(doc: dict, ex, patient: dict) -> dict:
         "extraction": ex.model_dump(mode="json"),
         "confirm_queue": queue,
         "warnings": _warnings(ex, patient, pages),
-        "document_date": d.isoformat() if d else (doc.get("created_at") or "")[:10],
+        "document_date": d.isoformat() if d else None,
     }
     doc.update(patch)
     return patch

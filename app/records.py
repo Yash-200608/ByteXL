@@ -58,7 +58,7 @@ def timeline(patient_id: str, doc_type: str | None = None) -> list[dict]:
             if isinstance(ex, LabReport):
                 item["highlights"] = [f"{a['name']} {a['flag']}" for a in item["abnormal"]][:6]
         out.append(item)
-    out.sort(key=lambda x: (x["date"] or "9999", x["document_id"]), reverse=True)
+    out.sort(key=lambda x: (x["date"] or "0000", x["document_id"]), reverse=True)
     return out
 
 

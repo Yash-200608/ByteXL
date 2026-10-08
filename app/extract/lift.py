@@ -31,9 +31,11 @@ class Lifter:
         match, hit, box = self.loc.locate(search, anchor)
         ocr_conf = hit[1].confidence if hit else 0.0
         conf = field_confidence(match, ocr_conf, self.retried, self.low)
-        f = Field[kind](value=value, confidence=conf, source_box=box)
-        if match < self.loc_threshold:
+        found = match >= self.loc_threshold
+        f = Field[kind](value=value, confidence=conf, source_box=box if found else None)
+        if not found:
             f.reasons.append("value not found in document text")
+            hit = None
         return f, hit
 
     @property

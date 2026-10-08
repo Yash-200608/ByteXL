@@ -9,7 +9,7 @@ DOSE_RE = re.compile(
     re.I,
 )
 TIMING_RE = re.compile(r"\b(after (?:food|meals?|breakfast|lunch|dinner)|before (?:food|meals?|breakfast|lunch|dinner)|empty stomach|at bedtime|bedtime|ac|pc|hs)\b", re.I)
-DURATION_RE = re.compile(r"((?:x|for)\s*\d+\s*(?:days?|d|wks?|weeks?|months?|mo)\b|\(?continue\)?|long term)", re.I)
+DURATION_RE = re.compile(r"((?:x|×|for)\s*\d+\s*(?:days?|d|wks?|weeks?|months?|mo)\b|\(?continue\)?|long term)", re.I)
 STRENGTH_RE = re.compile(r"\b(\d+(?:\.\d+)?\s*(?:mg|mcg|g|ml|iu|k|%))\b", re.I)
 
 
@@ -85,7 +85,7 @@ def rules_extract(doc_type: str, text: str):
             tests=lab_rows(text),
         )
     if doc_type == "prescription":
-        dm = re.search(r"\bdate\s*[:\-]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4})", text, re.I)
+        dm = re.search(r"date\s*[:\-]?\s*(\d{1,2}[/.\-]\d{1,2}[/.\-]\d{2,4})", text, re.I)
         return PrescriptionLLM(
             **h,
             doctor_name=first if first.lower().startswith("dr") else "",

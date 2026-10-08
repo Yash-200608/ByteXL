@@ -251,6 +251,8 @@ def generate(doc: dict, ex, lang: str) -> tuple[dict, str, int, list[str]]:
     data = summary_input(ex, lang)
     notes = _notes(doc, ex, lang)
     errors: list[str] = []
+    if s.summary_mode == "template":
+        return assemble(ex, data, lang, template_sections(ex, data, lang), notes), "template", 0, errors
     try:
         res = get_llm().structured(
             s.text_model,

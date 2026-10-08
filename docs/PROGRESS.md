@@ -13,7 +13,7 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 | 5 Normalization | done | phase 5 |
 | 6 FHIR & API | done | phase 6 |
 | 7 Summaries | done | phase 7 |
-| 8 UI | pending | |
+| 8 UI | done | phase 8 |
 | 9 Hardening & demo | pending | |
 
 ## Environment (build machine)
@@ -68,7 +68,18 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
     renderers), values, flags, reconciliation notes and the disclaimer are injected by code. Checks: banned phrases
     (EN+HI), number grounding, abnormal coverage, Devanagari ratio for Hindi → one regeneration → template.
     English summary is generated during upload; Hindi on first request; both cached by extraction hash.
-20. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+20. Vision default switched to `qwen2.5vl:3b` at 1024 px (per the >90 s rule): on this CPU-only box qwen2.5vl:7b took
+    252 s for a single prescription crop and was OOM-killed (memory cgroup) when OCR ran alongside; 3b took 201–264 s
+    with F1 0.82 vs text-mode qwen2.5:7b 177 s / F1 0.78 on the handwritten prescription. Ollama runs with
+    `OLLAMA_MAX_LOADED_MODELS=1`. On a GPU machine set `VISION_MODEL=qwen2.5vl:7b`.
+21. `EXTRACTION_MODE=rules` and `SUMMARY_MODE=template` give a fully offline, LLM-free demo mode (fast, low
+    confidence everywhere, so every field lands in the confirm queue).
+22. UI: Streamlit `st.navigation` with pages in `ui/views/` (a `pages/` folder triggers Streamlit's legacy
+    auto-navigation on cold direct loads). Source crops via table row selection plus a "Show where a value came
+    from" picker (works on touch and is testable). Document labels are de-duplicated because Streamlit resolves
+    selectbox values by label.
+23. Missing document dates stay `null` (never the upload date) so historical documents never look current.
+24. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
 
 ## Deviations
 
@@ -76,8 +87,10 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 
 ## Known issues
 
+- On CPU-only hardware one document takes ~4–8 min end to end with the real models (vision prompt evaluation
+  dominates). The UI shows per-stage progress; the seed script is the fastest way to prepare a demo.
 - PaddlePaddle 3.3.1 crashes with oneDNN enabled; `enable_mkldnn=False` is set in `app/ingest/ocr.py`.
 
 ## Next step
 
-Phase 8 — Streamlit UI. Then run the real-model eval (`make eval -- --expected-dir tests/fixtures/synthetic_truth`) and Phase 9.
+Phase 9 — seed, eval results, README, demo script, architecture image.
