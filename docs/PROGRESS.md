@@ -9,10 +9,10 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 | 1 Architecture | done | phase 1 |
 | 2 Scaffold | done | phase 2 |
 | 3 Ingest & OCR | done | phase 3 |
-| 4 Extraction | pending | |
-| 5 Normalization | pending | |
-| 6 FHIR & API | pending | |
-| 7 Summaries | pending | |
+| 4 Extraction | done | phase 4 |
+| 5 Normalization | done | phase 5 |
+| 6 FHIR & API | done | phase 6 |
+| 7 Summaries | done | phase 7 |
 | 8 UI | pending | |
 | 9 Hardening & demo | pending | |
 
@@ -46,7 +46,29 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
    space. Photo/scan pages are deskewed + contrast-stretched before OCR and the processed image is what is stored.
 10. Document classifier: weighted keyword rules; accepted when top score ≥ 4 and margin ≥ 3, else text-LLM
     fallback, else best rule score (`rules_low_margin`). All five samples classify by rules.
-11. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+11. LLM-facing schemas are flat strings ("as printed"); dates, numbers, age and sex are parsed in Python (day-first
+    dates). The JSON schema sent to Ollama marks every property required (otherwise grammar-constrained decoding
+    silently skips optional header fields — observed with qwen2.5:7b).
+12. Extraction chain: configured mode (`vision` → `VISION_MODEL`) → `text` mode (OCR text → `TEXT_MODEL`) if the
+    vision call is unavailable → deterministic rules extractor (`app/extract/rules.py`) marked low confidence.
+13. Field confidence = 0.55·fuzzy match to OCR + 0.45·OCR line confidence (×0.85 after a retry, ≤0.30 for rules);
+    values not found in the OCR text get a reason and go to the confirm queue (hallucination guard).
+14. Synthetic ground truth for the generated samples lives in `tests/fixtures/synthetic_truth/` (emitted by
+    `scripts/make_samples.py`). `samples/expected/` skeletons stay empty for hand-filling, as requested.
+15. Normalization: 51 lab tests (`data/reference/lab_tests.csv`, LOINC, sex-specific adult ranges, critical limits,
+    curated EN/HI plain meanings), 103 brands (`medicines.csv`, optional `medicines_extended.csv` merged). Combination
+    products are reconciled per component (Ecosprin AV + Atorva → atorvastatin twice).
+16. Active-medicine window for reconciliation is anchored to the patient's most recent document date
+    (`RECONCILE_AS_OF=latest_document`) because uploads are usually historical; set `today` for live use.
+17. FHIR: deterministic uuid5 fullUrls (patient/practitioner/organization dedupe across bundles on export);
+    Observations carry canonical-unit values (printed value kept in `note` when converted); `?profile=abdm` wraps a
+    bundle as an ABDM `document` Bundle with a Composition.
+18. Mock ABHA numbers are 14 digits `91-XXXX-XXXX-XXXX` with a Verhoeff check digit; addresses `name1234@abdm`.
+19. Summaries: the LLM writes only prose sections (what/key findings/meanings/questions). Medicines (EN + HI
+    renderers), values, flags, reconciliation notes and the disclaimer are injected by code. Checks: banned phrases
+    (EN+HI), number grounding, abnormal coverage, Devanagari ratio for Hindi → one regeneration → template.
+    English summary is generated during upload; Hindi on first request; both cached by extraction hash.
+20. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
 
 ## Deviations
 
@@ -58,4 +80,4 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 
 ## Next step
 
-Phase 4 — extraction.
+Phase 8 — Streamlit UI. Then run the real-model eval (`make eval -- --expected-dir tests/fixtures/synthetic_truth`) and Phase 9.
