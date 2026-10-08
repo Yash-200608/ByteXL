@@ -21,7 +21,7 @@ BANNED = {
         "don't need a doctor", "do not need a doctor", "instead of your doctor", "safe to stop", "nothing to worry",
         "not serious", "is serious", "emergency treatment", "may indicate", "might indicate", "could indicate",
         "suggesting", "suggests", "suggestive of", "indicating potential", "you may have", "you might have", "sign of",
-        "signs of", "at risk", "risk of", "consistent with", "likely have", "probably have",
+        "signs of", "at risk", "risk of", "consistent with", "likely have", "probably have", "the patient has",
     ],
     "hi": [
         "आपको बीमारी है", "आपको यह बीमारी है", "आप पीड़ित हैं", "दवा बंद करें", "दवा बंद कर दें", "दवा लेना बंद",

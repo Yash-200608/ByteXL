@@ -173,3 +173,17 @@ def test_full_flow_image_prescription(api, patient):
     assert len(rx["extraction"]["medications"]) == 3
     r = api.get(f"/documents/{rx['id']}/pages/0")
     assert r.status_code == 200 and r.headers["content-type"] == "image/png"
+
+
+def test_mark_handwritten_forces_confirmation(api, patient, fake_llm):
+    from tests.fakes import RX
+
+    fake_llm.handler = router(rx={**RX, "handwritten": False})
+    rx = upload(api, patient["_id"], "rx.pdf", text_pdf(RX_PDF_LINES), "application/pdf")
+    assert rx["confirm_queue"] == []
+    r = api.post(f"/documents/{rx['id']}/handwritten", json={"handwritten": True})
+    assert r.status_code == 200
+    paths = {q["path"] for q in r.json()["confirm_queue"]}
+    assert {"medications.0.name", "medications.0.dosage", "medications.2.name"} <= paths
+    lab = upload(api, patient["_id"], "lab.pdf", (SAMPLES / "lab_report_2024_03.pdf").read_bytes(), "application/pdf")
+    assert api.post(f"/documents/{lab['id']}/handwritten", json={"handwritten": True}).status_code == 422

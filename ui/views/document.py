@@ -24,6 +24,11 @@ doc = safe(api.get, f"/documents/{doc_id}")
 if not doc:
     st.stop()
 ex = doc["extraction"]
+if doc["document_type"] == "prescription":
+    current_hw = bool(ex.get("is_handwritten"))
+    hw = st.toggle("This prescription is handwritten (every medicine name and dose will need your confirmation)", value=current_hw, key=f"hw_{doc_id}")
+    if hw != current_hw and safe(api.post, f"/documents/{doc_id}/handwritten", json={"handwritten": hw}, timeout=120):
+        st.rerun()
 for w in doc.get("warnings", []):
     st.warning(w)
 pending = len(doc.get("confirm_queue", []))

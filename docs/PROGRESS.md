@@ -86,7 +86,12 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
     for a lab report): LLM prose may name a disease only if the document itself states it (doctor's diagnosis /
     hospital course), or inside a value's meaning when our curated hint for that test mentions it. Added inference
     phrases ("may indicate", "suggesting", "risk of", "signs of", …) to the banned list.
-26. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+26. Handwriting detection = LLM `handwritten` flag OR low OCR confidence on an OCR'd prescription, plus an explicit
+    user switch (`POST /documents/{id}/handwritten`, toggle on the Document page) that forces the always-confirm rule.
+    The synthetic handwriting sample is a clean italic font that both qwen2.5vl:3b and PaddleOCR read as print, so the
+    seed marks it via the switch. (A real handwriting font could not be downloaded: GitHub raw fonts returned 403
+    from this environment's egress policy.)
+27. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
 
 ## Deviations
 
@@ -96,6 +101,7 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 
 - On CPU-only hardware one document takes ~4–8 min end to end with the real models (vision prompt evaluation
   dominates). The UI shows per-stage progress; the seed script is the fastest way to prepare a demo.
+- Automatic handwriting detection is weak on neat handwriting; the user switch is the safety net.
 - PaddlePaddle 3.3.1 crashes with oneDNN enabled; `enable_mkldnn=False` is set in `app/ingest/ocr.py`.
 
 ## Next step

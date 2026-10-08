@@ -37,6 +37,10 @@ class ConfirmIn(BaseModel):
     items: list[ConfirmItem]
 
 
+class HandwrittenIn(BaseModel):
+    handwritten: bool
+
+
 def _patient(pid: str) -> dict:
     p = get_repository().get("patients", pid)
     if p is None:
@@ -175,6 +179,17 @@ def post_confirm(document_id: str, body: ConfirmIn):
     except (KeyError, IndexError, AttributeError, ValueError) as exc:
         raise HTTPException(422, f"Unknown field path: {exc}") from exc
     return _public_doc(doc)
+
+
+@router.post("/documents/{document_id}/handwritten")
+def post_handwritten(document_id: str, body: HandwrittenIn):
+    d = _document(document_id)
+    if not d.get("extraction"):
+        raise HTTPException(409, "The document has not been processed yet.")
+    try:
+        return _public_doc(records.set_handwritten(document_id, body.handwritten))
+    except ValueError as exc:
+        raise HTTPException(422, str(exc)) from exc
 
 
 @router.post("/documents/{document_id}/retry", status_code=202)

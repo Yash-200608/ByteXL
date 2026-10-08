@@ -163,3 +163,12 @@ def confirm(doc_id: str, items: list[dict]) -> dict:
         f.reasons = []
     return rebuild(doc_id, ex)
 
+
+
+def set_handwritten(doc_id: str, value: bool) -> dict:
+    doc = get_repository().get("documents", doc_id)
+    ex = load_extraction(doc)
+    if not isinstance(ex, Prescription):
+        raise ValueError("Only prescriptions can be marked as handwritten.")
+    ex.is_handwritten = value
+    return rebuild(doc_id, ex)

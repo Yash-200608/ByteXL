@@ -38,6 +38,10 @@ def main(argv=None) -> int:
         start = time.time()
         doc = create_document(patient["_id"], f.name, f.read_bytes())
         doc = run_pipeline(doc["_id"])
+        if "handwritten" in f.stem and doc.get("document_type") == "prescription" and not (doc.get("extraction") or {}).get("is_handwritten"):
+            from app.records import set_handwritten
+
+            doc = set_handwritten(doc["_id"], True)
         st = doc["status"]
         method = (doc.get("extraction") or {}).get("meta", {}).get("method")
         print(f"  {f.name:40} {doc.get('document_type') or '-':18} {st['state']:7} method={method} queue={len(doc.get('confirm_queue') or [])} {time.time() - start:6.1f}s"

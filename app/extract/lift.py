@@ -65,6 +65,10 @@ class Lifter:
         sx = parse_sex(sex)
         if sx:
             p.sex, _ = self.field(sx, search=clean(sex))
+            if p.sex.source_box is None and clean(sex):
+                alt, _ = self.field(sx, search=clean(sex)[0])
+                if alt.source_box is not None:
+                    p.sex = alt
         if pid:
             p.identifier, _ = self.field(pid)
         return p

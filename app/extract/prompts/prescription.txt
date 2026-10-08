@@ -8,7 +8,7 @@ Rules:
 - "duration" exactly as written (e.g. x 5 days, for 1 week, x 1 month). Empty if not written.
 - "complaints" from C/O; "diagnoses" from Dx / Diagnosis / Impression, as written, one item per condition.
 - "follow_up" is the follow-up instruction without the word "Review" or "Follow up", e.g. "after 6 months with FBS".
-- "handwritten" is true if the medicines are handwritten.
+- "handwritten" is true if the medicines are written by hand or in a handwriting-like script, false only for typed/printed text.
 
 Example output for a different prescription:
 {"patient_name": "Ramesh Kumar", "age": "60", "sex": "M", "doctor_name": "Dr. S. Gupta", "doctor_registration": "DMC 12345", "clinic": "Gupta Clinic", "date": "05/02/2024", "complaints": ["cough x 5 days"], "diagnoses": ["URTI"], "medicines": [{"name": "Tab Azee 500", "strength": "500", "dosage": "OD", "timing": "after food", "duration": "x 3 days", "instructions": ""}, {"name": "Syp Ascoril", "strength": "", "dosage": "1-1-1", "timing": "", "duration": "x 5 days", "instructions": "2 tsp"}], "advice": ["steam inhalation"], "follow_up": "after 5 days", "handwritten": false}
