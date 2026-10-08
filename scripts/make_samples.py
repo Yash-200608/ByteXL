@@ -402,7 +402,7 @@ def write_truth():
     out = ROOT / "tests" / "fixtures" / "synthetic_truth"
     out.mkdir(parents=True, exist_ok=True)
     for name, truth in TRUTH.items():
-        (out / f"{name}.json").write_text(json.dumps(truth, indent=2) + "\n")
+        (out / f"{name}.json").write_text(json.dumps(truth, indent=2) + "\n", encoding="utf-8")
 
 
 if __name__ == "__main__":

@@ -24,6 +24,14 @@ On a GPU machine set `VISION_MODEL=qwen2.5vl:7b` in `.env` for better accuracy. 
 
 Other commands: `make test` (pytest), `make eval` (field-level accuracy), `make samples` (regenerate synthetic samples).
 
+### Windows
+
+`run.ps1` replaces the Makefile: `.\run.ps1 setup`, `.\run.ps1 seed`, `.\run.ps1 test`, and `.\run.ps1 demo`, which opens the API, the UI and, if Ollama is not running, the mock below in separate windows. Use `.\run.ps1 stop` to close them.
+
+### Mock Ollama (machines that cannot run the models)
+
+`scripts/mock_ollama.py` is a stand-in that serves Ollama's `/api/tags` and `/api/chat` on port 11434. It is **not a model**. For the five bundled samples it replays their reference answers from `tests/fixtures/synthetic_truth/`. For any other document it answers with the rules extractor. Summaries are composed from the validated JSON and still go through every safety check. OCR, normalization, FHIR and the UI all run for real. Health reports `mock-ollama:stand-in` among the installed models. Stop the mock and start real Ollama before the eval numbers or a live demo mean anything.
+
 ## Architecture
 
 ![ByteXL pipeline](docs/architecture.png)

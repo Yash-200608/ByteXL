@@ -21,7 +21,7 @@ class JsonFileRepository(Repository):
     def _write(self, collection: str, doc: dict) -> dict:
         path = self._path(collection, doc["_id"])
         tmp = path.with_suffix(".tmp")
-        tmp.write_text(json.dumps(doc, ensure_ascii=False, default=str))
+        tmp.write_text(json.dumps(doc, ensure_ascii=False, default=str), encoding="utf-8")
         tmp.replace(path)
         return doc
 
@@ -36,7 +36,7 @@ class JsonFileRepository(Repository):
         with self._lock:
             if not path.exists():
                 return None
-            return json.loads(path.read_text())
+            return json.loads(path.read_text(encoding="utf-8"))
 
     def replace(self, collection: str, doc: dict) -> dict:
         with self._lock:
@@ -55,7 +55,7 @@ class JsonFileRepository(Repository):
         out = []
         with self._lock:
             for path in (self.root / collection).glob("*.json"):
-                doc = json.loads(path.read_text())
+                doc = json.loads(path.read_text(encoding="utf-8"))
                 if matches(doc, query):
                     out.append(doc)
         if sort:

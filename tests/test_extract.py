@@ -119,7 +119,7 @@ def test_rules_lab_rows():
 
 
 def test_eval_compare_perfect_and_partial():
-    truth = json.loads((TRUTH / "lab_report_2024_03.json").read_text())
+    truth = json.loads((TRUTH / "lab_report_2024_03.json").read_text(encoding="utf-8"))
     perfect = compare(truth, truth)
     assert perfect.precision == 1.0 and perfect.recall == 1.0
     pred = json.loads(json.dumps(truth))
@@ -141,7 +141,7 @@ def test_eval_same_rules():
 def test_flatten_roundtrip_rules(lab_pages, fake_llm):
     fake_llm.responses += ['{"tests": []}', '{"tests": []}']
     flat = to_flat(extract("lab_report", lab_pages, mode="text"))
-    truth = json.loads((TRUTH / "lab_report_2024_03.json").read_text())
+    truth = json.loads((TRUTH / "lab_report_2024_03.json").read_text(encoding="utf-8"))
     assert compare(truth, flat).recall > 0.6
 
 
@@ -150,7 +150,7 @@ def test_eval_script_skips_empty_expected(tmp_path, settings_tmp):
 
     out = tmp_path / "eval.md"
     assert ev.main(["--out", str(out)]) == 0
-    assert "expected JSON still empty" in out.read_text()
+    assert "expected JSON still empty" in out.read_text(encoding="utf-8")
 
 
 def test_tidy_med_grounded_fixes(lab_pages):

@@ -17,7 +17,7 @@ MAX_VISION_PAGES = 2
 
 
 def load_prompt(name: str) -> str:
-    return (get_settings().prompts_dir / f"{name}.txt").read_text()
+    return (get_settings().prompts_dir / f"{name}.txt").read_text(encoding="utf-8")
 
 
 def page_text(pages: list[PageData]) -> str:

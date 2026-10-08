@@ -9,13 +9,13 @@ ROOT = Path(__file__).resolve().parents[1]
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=ROOT / ".env", extra="ignore")
 
-    mongo_uri: str = "mongodb://localhost:27017"
+    mongo_uri: str = "mongodb://127.0.0.1:27017"
     mongo_db: str = "bytexl"
     mongo_timeout_ms: int = 1500
     store_backend: str = "auto"
     data_dir: Path = ROOT / "data"
 
-    ollama_url: str = "http://localhost:11434"
+    ollama_url: str = "http://127.0.0.1:11434"
     vision_model: str = "qwen2.5vl:3b"
     vision_fallback_model: str = "qwen2.5vl:7b"
     text_model: str = "qwen2.5:7b"
@@ -45,7 +45,7 @@ class Settings(BaseSettings):
     summary_mode: str = "llm"
     hindi_summary_mode: str = "template"
 
-    api_url: str = "http://localhost:8000"
+    api_url: str = "http://127.0.0.1:8000"
 
     @property
     def uploads_dir(self) -> Path:

@@ -100,6 +100,11 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
     mangled the lab name, translated "liver" as "लिफ्ट" and produced a wrong month. LLM Hindi (with all checks) is one
     setting away: `HINDI_SUMMARY_MODE=llm`.
 29. Upload pipeline runs as a background job with a polled `status.stage`; `?sync=true` runs inline (tests, seed).
+30. Windows dev machine (i5-6500, 4 cores, GT 730 2 GB, no Ollama/Mongo/Docker): `run.ps1` replaces the Makefile;
+    text file I/O is explicitly UTF-8 (cp1252 default broke Hindi); default URLs use `127.0.0.1` because `localhost`
+    resolves to IPv6 first on Windows and every call to an IPv4-only server waited ~2 s. `scripts/mock_ollama.py`
+    stands in for Ollama there (reference answers for the bundled samples, rules extractor otherwise). PaddleOCR
+    runs natively at ~30 s/page; full test suite passes (208 passed, 1 skipped).
 
 ## Deviations
 

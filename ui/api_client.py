@@ -2,7 +2,7 @@ import os
 
 import httpx
 
-API_URL = os.environ.get("API_URL", "http://localhost:8000").rstrip("/")
+API_URL = os.environ.get("API_URL", "http://127.0.0.1:8000").rstrip("/")
 
 
 class ApiError(RuntimeError):

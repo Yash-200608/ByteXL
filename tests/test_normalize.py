@@ -288,7 +288,7 @@ def test_extended_csv_merged(tmp_path, monkeypatch):
     assert not ext.exists()
     load_medicines.cache_clear()
     try:
-        ext.write_text("brand,generic,strength,form,drug_class\nZzymed,zzyamine,5 mg,tablet,test\n")
+        ext.write_text("brand,generic,strength,form,drug_class\nZzymed,zzyamine,5 mg,tablet,test\n", encoding="utf-8")
         load_medicines.cache_clear()
         assert resolve_medicine("Tab Zzymed 5")[0].generic == "zzyamine"
     finally:

@@ -20,14 +20,14 @@ from app.ingest.models import PageData
 def predict(sample: Path, cache_dir: Path, fresh: bool, mode: str | None) -> dict:
     cache = cache_dir / f"{sample.stem}.json"
     if cache.exists() and not fresh:
-        return json.loads(cache.read_text())
+        return json.loads(cache.read_text(encoding="utf-8"))
     start = time.time()
     pages_cache = cache_dir / f"{sample.stem}.pages.json"
     if pages_cache.exists() and not fresh:
-        pages = [PageData(**p) for p in json.loads(pages_cache.read_text())]
+        pages = [PageData(**p) for p in json.loads(pages_cache.read_text(encoding="utf-8"))]
     else:
         pages = ingest_file(sample, f"eval_{sample.stem}")
-        pages_cache.write_text(json.dumps([p.model_dump() for p in pages]))
+        pages_cache.write_text(json.dumps([p.model_dump() for p in pages]), encoding="utf-8")
     text = "\n".join(p.text for p in pages)
     cls = classify(text)
     ex = extract(cls.document_type, pages, mode=mode)
@@ -40,7 +40,7 @@ def predict(sample: Path, cache_dir: Path, fresh: bool, mode: str | None) -> dic
         "seconds": round(time.time() - start, 1),
         "prediction": to_flat(ex),
     }
-    cache.write_text(json.dumps(out, indent=2, default=str))
+    cache.write_text(json.dumps(out, indent=2, default=str), encoding="utf-8")
     return out
 
 
@@ -67,7 +67,7 @@ def main(argv=None) -> int:
         if not exp_path.exists():
             skipped.append((sample.name, "no expected JSON"))
             continue
-        expected = json.loads(exp_path.read_text())
+        expected = json.loads(exp_path.read_text(encoding="utf-8"))
         if empty({k: v for k, v in expected.items() if k != "document_type"}):
             skipped.append((sample.name, "expected JSON still empty"))
             continue
@@ -113,7 +113,7 @@ def main(argv=None) -> int:
             lines.append(f"<details><summary>{name} — {len(misses)} mismatches</summary>\n")
             lines += [f"- `{m}`" for m in misses] or ["- none"]
             lines.append("\n</details>\n")
-    Path(args.out).write_text("\n".join(lines) + "\n")
+    Path(args.out).write_text("\n".join(lines) + "\n", encoding="utf-8")
     print(f"wrote {args.out}")
     return 0
 
