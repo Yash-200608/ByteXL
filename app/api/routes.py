@@ -41,6 +41,16 @@ class HandwrittenIn(BaseModel):
     handwritten: bool
 
 
+class PerryTurn(BaseModel):
+    role: Literal["user", "perry"]
+    content: str = Field(max_length=4000)
+
+
+class PerryIn(BaseModel):
+    message: str = Field(min_length=1, max_length=1000)
+    history: list[PerryTurn] = Field(default_factory=list, max_length=20)
+
+
 def _patient(pid: str) -> dict:
     p = get_repository().get("patients", pid)
     if p is None:
@@ -243,3 +253,12 @@ def export_patient(patient_id: str, profile: Literal["collection", "abdm"] = "co
             "entry": [{"resource": to_document_bundle(e, b["document_type"])} for b, e in docs.values()],
         }
     return merge_bundles([e for _, e in embedded], patient_id)
+
+
+@router.post("/patients/{patient_id}/perry")
+def post_perry(patient_id: str, body: PerryIn):
+    from app.agent import Perry
+
+    _patient(patient_id)
+    reply = Perry(patient_id).respond(body.message, [t.model_dump() for t in body.history])
+    return reply.to_dict()

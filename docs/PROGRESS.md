@@ -139,6 +139,23 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
     - The pipeline then failed mid-run, so whichever summary test was running saw no LLM calls.
     - `_replace_with_retry` retries up to 20 times with linear backoff (about 5 s worst case), then re-raises.
     - The fast suite went from 1 failure in 2 runs to 0 in 8.
+33. PERRY assistant (`app/agent/`, `ui/views/perry.py`, `ui/perry_mascot.py`, `POST /patients/{id}/perry`).
+    - Tools are bound to a patient at construction; arguments are `extra="forbid"` Pydantic models, so a model-supplied
+      `patient_id` is rejected.
+    - Planner: `OllamaClient.structured` with a `Plan` schema whose tool name is a Literal enum.
+    - Answer: plain chat, then `check_answer`, which reuses the summary safety functions plus a PERRY-specific banned
+      list, an internal-id check and a script check. One retry with feedback, then the deterministic composer.
+    - Treatment-decision questions never reach the answer LLM.
+    - A planner that returns no calls for a data question is overridden by the router, so PERRY never answers account
+      questions without retrieving.
+    - Language: Unicode script ranges plus Hinglish marker words (no new dependency).
+    - Devanagari Hindi answers default to the composer (`PERRY_HINDI_MODE=template`), as with the summaries; Hinglish uses
+      the LLM.
+    - Other Indic scripts are detected and the LLM is asked to answer in them; the composer falls back to English with a
+      note.
+    - Voice is not built (P2).
+    - The mascot is an original SVG with CSS states for idle, thinking and error.
+    - Tests: 45 in `tests/test_perry.py`.
 
 ## Deviations
 

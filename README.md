@@ -59,6 +59,35 @@ Green steps are deterministic Python, orange steps use a local LLM. The principl
 - **Unified timeline and trends**: all documents chronologically; any test over time with the reference band shaded; current medicines with duplicate-medicine alerts ("Metformin appears on 2 of your documents — ask your doctor").
 - **ABDM-ready**: mock ABHA number (Verhoeff-valid `91-XXXX-XXXX-XXXX`) and ABHA address on every patient, link-existing-ABHA flow, one-click FHIR export.
 
+## PERRY — your ByteXL assistant
+
+PERRY is the app's home page: a chat assistant that answers questions about the selected user's own records in English, Hindi
+(Devanagari) or Hinglish, for example "What changed in my health records?", "Meri latest report samjhao", or "Which medicine was
+prescribed most recently?". It lives in `app/agent/` and reuses ByteXL's existing services. It has no database of its own.
+
+- **User-scoped tools only.** The app binds a tool set to the current user (`PerryTools(patient_id)`). The model only picks a tool name
+  and its arguments, which are checked against strict schemas that reject extra fields. It can't pass or change a user ID, read
+  another user's documents, or run queries, code or shell commands.
+- **Tools:**
+  - `get_my_overview`, `search_my_records` (fuzzy search across labs, medicines, diagnoses, documents, advice, summaries and
+    confirmations)
+  - `get_my_labs`, `compare_my_reports`, `get_my_medications`
+  - `get_my_documents`, `get_my_timeline`, `get_my_document`, `get_my_summary`
+  - `get_pending_confirmations`, `get_my_profile`
+- **Loop:**
+  1. The local text model plans 1–3 tool calls, with its output constrained to valid tool names.
+  2. The tools run.
+  3. The model writes the answer.
+  4. Every answer is checked like the summaries: no numbers, months or conditions that aren't in the retrieved data, no treatment
+     advice or speculation, no internal IDs, and the right language and script. A rejected answer is retried once.
+- **Safety net:** if the model is unavailable or keeps failing the checks, a rule-based router and a fixed-phrase composer answer from the
+  same tools in English, Hindi or Hinglish. Questions like "should I stop this medicine?" always get the fixed reply: it shows the
+  medicine exactly as written and refers the decision to the doctor.
+- **Settings:** `PERRY_MODE=llm|template`; `PERRY_HINDI_MODE=template|llm` controls Devanagari replies (template by default, for the same
+  reason as the summaries).
+- **API:** `POST /patients/{id}/perry` with `{"message": "...", "history": [...]}`. The patient in the path stands in for the logged-in
+  user: ByteXL has no login, so the selected patient is treated as the current user.
+
 ## Medical safety approach
 
 1. **No LLM decides a fact.** Abnormal flags, units, ranges, dosing schedules, generic names and duplicate-medicine alerts are deterministic and unit-tested.

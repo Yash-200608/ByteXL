@@ -42,6 +42,11 @@ class Settings(BaseSettings):
     active_med_default_days: int = 90
     reconcile_as_of: str = "latest_document"
     summary_on_upload: bool = True
+    perry_mode: str = "llm"
+    perry_hindi_mode: str = "template"
+    perry_max_tool_calls: int = 3
+    perry_history_turns: int = 6
+    perry_result_chars: int = 6000
     summary_mode: str = "llm"
     hindi_summary_mode: str = "template"
 
