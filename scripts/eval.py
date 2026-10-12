@@ -89,7 +89,12 @@ def review_stats(ex, pages: list[PageData], marked_handwritten: bool = False) ->
     normalize_extraction(copy, sex=None)
     queue = apply_confirmation_rules(copy, handwritten=marked_handwritten or _is_handwritten(copy, pages))
     total = sum(1 for _, f in iter_fields(copy) if f.value is not None)
-    return {"fields": total, "flagged": len(queue), "paths": [q["path"] for q in queue]}
+    reasons: dict[str, int] = {}
+    for q in queue:
+        for r in q["reasons"]:
+            key = r.split(":")[0].split("(")[0].strip()
+            reasons[key] = reasons.get(key, 0) + 1
+    return {"fields": total, "flagged": len(queue), "paths": [q["path"] for q in queue], "reasons": reasons}
 
 
 def predict(sample: Path, cache_dir: Path, fresh: bool, mode: str | None) -> dict:
@@ -114,6 +119,7 @@ def predict(sample: Path, cache_dir: Path, fresh: bool, mode: str | None) -> dic
         "method": ex.meta.method,
         "model": ex.meta.model,
         "low_confidence": ex.meta.low_confidence,
+        "handwritten_detected": _is_handwritten(ex, pages),
         "attempts": ex.meta.attempts,
         "seconds": round(time.time() - start, 1),
         "review": review_stats(ex, pages),
@@ -228,6 +234,16 @@ def build_report(ctx: dict) -> list[str]:
             lines.append(f"| {name} | {r['fields']} | {r['flagged']} | {pct(r['flagged'], r['fields'])} | {marked} |")
         lines.append(f"| **Overall** | **{tf}** | **{tq}** | **{pct(tq, tf)}** | **{tqm} ({pct(tqm, tf)})** |")
         lines.append(f"\nDocuments with at least one queued field: {sum(1 for _, r, _ in reviewed if r['flagged'])} of {len(reviewed)}.")
+        detected = [name for name, pred, *_ in rows if pred.get("handwritten_detected")]
+        if any("handwritten_detected" in pred for _, pred, *_ in rows):
+            lines.append(f"\nDetected as handwritten without the switch: {', '.join(detected) if detected else 'none'}.")
+        why: dict[str, int] = {}
+        for _, r, _ in reviewed:
+            for k, v in (r.get("reasons") or {}).items():
+                why[k] = why.get(k, 0) + v
+        if why:
+            lines += ["", "Reasons (a field can have several):", ""]
+            lines += [f"- {k}: {v}" for k, v in sorted(why.items(), key=lambda kv: -kv[1])]
         missing = [name for name, pred, *_ in rows if not pred.get("review")]
         if missing:
             lines.append(f"\nNot recorded for {', '.join(missing)} (cached from a run that predates this metric; rerun with `--fresh`).")

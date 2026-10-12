@@ -147,3 +147,5 @@ def test_handwriting_switch_adds_drug_fields_to_the_queue(settings_tmp, tmp_path
     assert marked["fields"] == plain["fields"]
     assert marked["flagged"] > plain["flagged"]
     assert any(p.endswith(".name") for p in marked["paths"]) and any(p.endswith(".dosage") for p in marked["paths"])
+    assert marked["reasons"]["handwritten prescription — confirm medicine name"] >= 1
+    assert sum(marked["reasons"].values()) >= marked["flagged"]
