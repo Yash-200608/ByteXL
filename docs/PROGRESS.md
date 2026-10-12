@@ -198,8 +198,8 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 ## Next step
 
 All phases done. Remaining by hand:
-0. Action plan PER-01: merge the reviewed state into `main`, make `main` the default branch on GitHub, point the
-   Streamlit Cloud app at `main`, and delete stale `claude/*` branches (decision 40).
+0. Action plan PER-01, two steps left (decision 41): redeploy the Streamlit Cloud app from `main` (delete and
+   redeploy with the same subdomain; it needs the owner's Streamlit login), then delete the `claude/*` branches.
 1. Fill `samples/expected/*.json` for any real documents you add to `samples/`, then `make eval EVAL_TRUTH=samples/expected`.
 2. Fill the hardware line in the master prompt; on a GPU set `VISION_MODEL=qwen2.5vl:7b` and rerun `make eval`.
 3. Optional: try `HINDI_SUMMARY_MODE=llm` on stronger hardware and review Hindi output before demoing it.
@@ -323,9 +323,22 @@ extraction, English LLM summaries), 209 tests passing (`.venv/bin/pytest -q`), r
       Python 3.11 and 3.12, plus an eval-report smoke run in rules mode. The PaddleOCR tests are a separate job that
       runs only from a manual dispatch. New `make test-fast`, `make test-slow` and `make eval-fresh` targets.
       - Verified here: 297 passed, 1 skipped on 3.11 and on 3.12 (slim install); 311 passed, 1 skipped with the
-        full `requirements.txt`. The workflow itself has not run yet.
+        full `requirements.txt`. The workflow's first GitHub run, on `bf9e1df`, passed (see decision 41).
     - **Bug found by the clean install:** OpenCV 5 (`opencv-python-headless==5.0.0.93`, pinned in
       `ui/requirements.txt`) reports `minAreaRect` angles about 90° away from 4.x, so `estimate_skew` returned 0 for a
       -3° page. It now folds angles modulo 90° (`app/ingest/preprocess.py`), which works with either convention.
     - **PER-01 (default branch) is not done:** the repository's default branch is a generated `claude/*` branch.
       Merging to `main` and changing the default branch is a GitHub settings change for the owner.
+41. PER-01 on the Windows dev machine: `main` is now the default branch.
+    - The cloud session's branch `claude/new-session-jl5xox` (decision 40) fast-forwarded onto
+      `claude/vibrant-galileo-yog6s4`; nothing conflicted.
+    - Verified before publishing: the full suite on Windows with the full `requirements.txt`, including the PaddleOCR
+      tests, gave 311 passed, 1 skipped. The CI workflow's first GitHub run, on `bf9e1df`, passed in 2 m 13 s.
+    - `main` was pushed from that state and made the default branch with `gh repo edit --default-branch main`. The
+      local checkout now tracks `origin/main`.
+    - `claude/vibrant-galileo-yog6s4` is kept and fast-forwarded to `main` for now, because the Streamlit Cloud app
+      deploys from it. Community Cloud cannot change a deployed app's branch: the app has to be deleted and redeployed
+      from `main`, entering the old subdomain `bytexl-dkbehxqvatgepvl9agprgv` so the README link keeps working.
+      Deleting the branch first would cut the app off from its source.
+    - Left for the owner: that redeploy (Streamlit login), then deleting `claude/vibrant-galileo-yog6s4` and
+      `claude/new-session-jl5xox`, whose commits are all on `main`.
