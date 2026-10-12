@@ -1,0 +1,59 @@
+name: ci
+
+on:
+  push:
+    branches: [main, "claude/**"]
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      ocr_tests:
+        description: "Also run the optional OCR tests (installs PaddleOCR, downloads its models)"
+        type: boolean
+        default: false
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  unit-tests-cpu:
+    name: unit tests (CPU only, no models, py${{ matrix.python }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python }}
+          cache: pip
+          cache-dependency-path: ui/requirements.txt
+      - run: pip install -r ui/requirements.txt pytest
+      - name: Fast suite (no PaddleOCR, no Ollama, no GPU)
+        run: python -m pytest -q -m "not slow"
+      - name: Language and eval-report checks
+        run: python scripts/eval.py --expected-dir tests/fixtures/synthetic_truth --only lab_report_2024_03 --out "$RUNNER_TEMP/eval_smoke.md"
+        env:
+          EXTRACTION_MODE: rules
+          OLLAMA_URL: http://127.0.0.1:1
+          DATA_DIR: ${{ runner.temp }}/eval-data
+
+  optional-ocr-tests:
+    name: optional - OCR tests (PaddleOCR on CPU, manual)
+    if: github.event_name == 'workflow_dispatch' && inputs.ocr_tests
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libgl1 libglib2.0-0 libgomp1
+      - run: pip install -r requirements.txt
+      - name: Slow suite (OCR over the bundled samples)
+        run: python -m pytest -q -m slow

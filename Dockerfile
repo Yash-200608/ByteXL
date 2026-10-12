@@ -22,7 +22,7 @@ ENV HOME=/home/user \
     PERRY_MODE=template \
     PERRY_INDIC_MODE=english \
     API_URL=http://127.0.0.1:8000 \
-    DEMO_NOTICE="Cloud demo: this server has no GPU, so PERRY's local AI models are replaced by its rule-based fallbacks. Synthetic demo data only — please don't upload real health records."
+    DEMO_NOTICE="Cloud demo · synthetic patient data · mock responses (pre-computed reference records and rule-based fallbacks) · not a live model run. This server has no GPU, so PERRY's local AI models are off. Please don't upload real health records."
 
 EXPOSE 7860
 CMD ["deploy/start.sh"]

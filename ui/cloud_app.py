@@ -20,8 +20,9 @@ CLOUD = {
     "PERRY_MODE": "template",
     "PERRY_INDIC_MODE": "english",
     "API_URL": "http://127.0.0.1:8000",
-    "DEMO_NOTICE": "Cloud demo: this server has no GPU, so PERRY's local AI models are replaced by its rule-based fallbacks, "
-                   "and photo OCR is off (text PDFs work). Synthetic demo data only — please don't upload real health records.",
+    "DEMO_NOTICE": "Cloud demo · synthetic patient data · mock responses (pre-computed reference records and rule-based fallbacks) · "
+                   "not a live model run. This server has no GPU, so PERRY's local AI models are off and photo OCR is off (text PDFs work). "
+                   "Please don't upload real health records.",
 }
 for key, value in CLOUD.items():
     os.environ.setdefault(key, value)

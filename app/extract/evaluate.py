@@ -26,6 +26,10 @@ def empty(v) -> bool:
     return False
 
 
+def field_key(path: str) -> str:
+    return re.sub(r"\[[^\]]*\]", "", path)
+
+
 def fold(s) -> str:
     return re.sub(r"[^a-z0-9%]+", "", str(s).lower())
 
@@ -54,12 +58,23 @@ class Score:
     predicted: int = 0
     correct: int = 0
     misses: list[str] = field(default_factory=list)
+    fields: dict[str, list[int]] = field(default_factory=dict)
 
     def add(self, other: "Score"):
         self.expected += other.expected
         self.predicted += other.predicted
         self.correct += other.correct
         self.misses += other.misses
+        for key, counts in other.fields.items():
+            mine = self.fields.setdefault(key, [0, 0, 0])
+            for i, c in enumerate(counts):
+                mine[i] += c
+
+    def record(self, path: str, expected: int, predicted: int, correct: int):
+        mine = self.fields.setdefault(field_key(path), [0, 0, 0])
+        mine[0] += expected
+        mine[1] += predicted
+        mine[2] += correct
 
     @property
     def precision(self) -> float:
@@ -85,6 +100,7 @@ def _scalar(path: str, e, p, key: str) -> Score:
         s.correct = 1
     elif not empty(e) or not empty(p):
         s.misses.append(f"{path}: expected={e!r} got={p!r}")
+    s.record(path, s.expected, s.predicted, s.correct)
     return s
 
 
@@ -153,4 +169,5 @@ def _unexpected(label: str, p: dict) -> Score:
         if not empty(v):
             s.predicted += 1
             s.misses.append(f"{label}.{k}: unexpected {v!r}")
+            s.record(f"{label}.{k}", 0, 1, 0)
     return s

@@ -26,10 +26,7 @@ def estimate_skew(gray: np.ndarray, max_angle: float = 10.0) -> float:
             angle = angle - 90
         if w < 60 or h < 4 or w / max(h, 1) < 4:
             continue
-        if angle > 45:
-            angle -= 90
-        if angle < -45:
-            angle += 90
+        angle = (angle + 45) % 90 - 45
         if abs(angle) <= max_angle:
             angles.append(angle)
             weights.append(w)

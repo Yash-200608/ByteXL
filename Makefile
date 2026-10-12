@@ -1,7 +1,8 @@
 PY ?= .venv/bin/python
 PORT ?= 8000
+EVAL_TRUTH ?= tests/fixtures/synthetic_truth
 
-.PHONY: setup api ui test eval seed samples mongo ollama
+.PHONY: setup api ui test test-fast test-slow eval eval-fresh seed samples mongo ollama
 
 setup:
 	python3.11 -m venv .venv && .venv/bin/pip install -r requirements.txt
@@ -15,8 +16,17 @@ ui:
 test:
 	$(PY) -m pytest -q
 
+test-fast:
+	$(PY) -m pytest -q -m "not slow"
+
+test-slow:
+	$(PY) -m pytest -q -m slow
+
 eval:
-	$(PY) scripts/eval.py
+	$(PY) scripts/eval.py --expected-dir $(EVAL_TRUTH)
+
+eval-fresh:
+	$(PY) scripts/eval.py --fresh --expected-dir $(EVAL_TRUTH)
 
 seed:
 	$(PY) scripts/seed.py
