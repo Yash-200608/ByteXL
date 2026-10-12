@@ -9,13 +9,27 @@ Snap a lab report, prescription or discharge summary and PERRY gives you:
 - one timeline of your health;
 - a chat and voice assistant that answers questions about *your own* records in 13 languages: English, Hinglish and 11 Indian languages.
 
-Everything runs locally, with no cloud APIs.
+When you run it yourself, everything stays on your machine, with no cloud APIs. The hosted demo below is a different thing: see the two modes.
 
 Built for the Altrix Labs "AI-Powered Personal Health Copilot" hackathon. The project began as **ByteXL**, and that is still
 the repository, package and API name; PERRY is the product users see.
 
-**▶ Live demo: https://bytexl-dkbehxqvatgepvl9agprgv.streamlit.app/** (cloud demo mode, with synthetic data; see
-[Live demo and deployment](#live-demo-and-deployment))
+**▶ Live demo: https://bytexl-dkbehxqvatgepvl9agprgv.streamlit.app/**
+`cloud demo / synthetic patient data / mock responses; not a live model run`
+
+The hosted demo has no GPU and no LLM. Its pre-loaded records are a snapshot captured through the mock Ollama, which replays
+reference answers (the stored extraction timings are 0.1–0.2 s), and anything you upload is read by the rule-based
+fallbacks. It shows the product, the pipeline and the safety checks, but **none of its numbers measure a model**. The measured
+results are in [Results](#results), and the live-AI version runs on your own machine.
+
+| | Cloud demo (hosted) | Local, mock Ollama | Local, rules only | Local, live models |
+|---|---|---|---|---|
+| Extraction | rule-based reader | replayed reference answers for the 5 bundled samples, rules for anything else | rules | `qwen2.5vl` + OCR |
+| Summaries and PERRY chat | templates and rule-based router | composed from the validated JSON by code, no model prose | templates | `qwen2.5:7b` under safety checks |
+| Data | synthetic only | yours stays local | yours stays local | yours stays local |
+| Counts as a model run | no | **no** | no | yes |
+
+Details and settings for each column are in [Modes and tested environments](#modes-and-tested-environments).
 
 ![PERRY answering a question, with the avatar in its Explaining state](docs/screenshots/perry_chat.jpg)
 
@@ -42,7 +56,8 @@ make ui                               # terminal 2 → http://localhost:8501
 On a GPU machine set `VISION_MODEL=qwen2.5vl:7b` in `.env` for better accuracy. For an instant, LLM-free demo use
 `EXTRACTION_MODE=rules SUMMARY_MODE=template make seed` (every field then lands in the confirm queue).
 
-Other commands: `make test` (pytest), `make eval` (field-level accuracy), `make samples` (regenerate synthetic samples).
+Other commands: `make test` (all of pytest), `make test-fast` (CPU-only, no OCR models, about 2 minutes), `make test-slow` (the OCR tests),
+`make eval` (field-level accuracy, [Results](#results)), `make samples` (regenerate synthetic samples).
 
 ### Windows
 
@@ -73,6 +88,59 @@ PERRY is built to run on the user's own device, so health data never leaves it. 
   `OLLAMA_URL` to an Ollama server to use the real models.
 
 Only synthetic data belongs on a public link: the app has no login, so anyone with the URL can see and upload.
+
+## Modes and tested environments
+
+### The four modes
+
+| Mode | How to select it | What reads the document | Needs | Counts as a live model run |
+|---|---|---|---|---|
+| **Live models** (default) | `.env.example` as shipped: `EXTRACTION_MODE=vision`, `SUMMARY_MODE=llm`, `PERRY_MODE=llm` | PaddleOCR, then `VISION_MODEL` with the page image | Ollama and the model tags below | yes |
+| **Mock Ollama** | same settings, with `scripts/mock_ollama.py` (or `.\run.ps1 demo`) on port 11434 | replayed reference answers for the 5 bundled samples; the rules extractor for anything else | `requirements.txt` (OCR), no models | **no**: `/health` lists `mock-ollama:stand-in`, and `scripts/eval.py` prints a warning and stamps the report |
+| **Rules only** | `EXTRACTION_MODE=rules SUMMARY_MODE=template PERRY_MODE=template` | the deterministic rules extractor | `requirements.txt` (OCR), no models | no: every field lands in the confirm queue |
+| **Cloud demo** | `ui/cloud_app.py` (Streamlit Cloud) or the `Dockerfile` | rules extractor, pre-loaded snapshot of mock-Ollama records | `ui/requirements.txt` | no |
+
+Safety checks, unit normalisation, flags, FHIR and the confirm queue are the same code in every mode. Only the text-reading and
+prose-writing steps change.
+
+### Model tags used for the published results
+
+| Role | Setting | Tag | Size | Digest (`ollama list` ID) |
+|---|---|---|---|---|
+| Vision extraction (default) | `VISION_MODEL` | `qwen2.5vl:3b` | 3.2 GB | `fb90415cde1e` |
+| Vision extraction (GPU, optional) | `VISION_FALLBACK_MODEL` | `qwen2.5vl:7b` | about 6 GB | not recorded |
+| Text: summaries, PERRY, classifier fallback | `TEXT_MODEL` | `qwen2.5:7b` | 4.7 GB | `845dbda0ea48` |
+| Indian-language translation (optional) | `TRANSLATE_MODEL` | `hf.co/fischerman/sarvam-translate-gguf:Q4_K_S` | about 2.4 GB | not recorded |
+| OCR | `OCR_DET_MODEL`, `OCR_REC_MODEL` | PaddleOCR 3.x `PP-OCRv5_mobile_det` / `_rec` | small, auto-downloaded | n/a |
+| Speech (optional) | `STT_MODEL` | faster-whisper `small`, int8 | downloaded on first voice use | n/a |
+
+Ollama tags can be republished, so the digest is what pins a run. Every `docs/eval_results.md` records the digests it ran with.
+
+### Tested environments
+
+| Environment | Python | What was run | Result |
+|---|---|---|---|
+| Ubuntu 24.04 container, 4 vCPU, 15 GB RAM, no GPU | 3.11 | `pip install -r ui/requirements.txt pytest`, then `pytest -m "not slow"` | 297 passed, 1 skipped |
+| same | 3.12 | same | 297 passed, 1 skipped |
+| same | 3.11 | full `requirements.txt`, then the whole suite including `slow` | FULL_SUITE_RESULT |
+| same | 3.11 | `make eval-fresh` with live `qwen2.5vl:3b` and `qwen2.5:7b` on CPU | [Results](#results) |
+| Streamlit Community Cloud | 3.12 | `ui/cloud_app.py` from `ui/requirements.txt` | boots and serves the demo (`docs/PROGRESS.md`, decision 39) |
+| Windows dev machine, i5-6500, 4 cores, no GPU, no Ollama | 3.11 | full suite with `run.ps1 test`, mock Ollama | 208 passed, 1 skipped when last run (decision 30); not rerun at this commit |
+| GitHub Actions, `ubuntu-24.04` | 3.11 and 3.12 | `.github/workflows/ci.yml`, the same fast suite | defined here; check the Actions tab for the latest run |
+
+Not tested: macOS, ARM, and any GPU run of `qwen2.5vl:7b`.
+
+### CPU-only path and resources
+
+- **Tests need no GPU, no Ollama and no OCR models.** The LLM is a fake in the tests, and the 13 tests that run PaddleOCR are marked `slow`. CI installs
+  only `ui/requirements.txt` and runs `pytest -m "not slow"`; the OCR tests are a separate, manually triggered job.
+- **Real inference runs on CPU too, slowly.** With the default tags, one page takes about 4–8 minutes on 4 vCPUs (vision prompt evaluation dominates);
+  OCR alone is about 20 s per page. A GPU brings that to seconds.
+- **Disk:** about 8 GB for the two required models (about 10 GB with the translator), plus about 2.2 GB for the Python environment with PaddleOCR
+  and about 0.8 GB for the slim one used by CI and the cloud demo.
+- **RAM:** 15 GB is enough for the default tags with OCR. On that machine `qwen2.5vl:7b` was killed by the memory limit when OCR ran alongside it
+  (decision 20), so use it only with more RAM or a GPU. `OLLAMA_MAX_LOADED_MODELS=1` keeps a single model resident.
+- **GPU:** optional. Nothing in the test suite or the published results used one.
 
 ## Architecture
 

@@ -126,3 +126,24 @@ def test_mock_ollama_is_flagged(monkeypatch):
 def test_unreachable_ollama_is_reported():
     state = ev.ollama_state("http://127.0.0.1:1", ["qwen2.5:7b"])
     assert state == {"reachable": False, "version": "", "models": {}, "mock": False}
+
+
+def test_handwriting_switch_adds_drug_fields_to_the_queue(settings_tmp, tmp_path):
+    from app.extract.extract import extract
+    from app.ingest.ingest import ingest_file
+    from app.normalize.confirm import iter_fields
+    from tests.fakes import RX_PDF_LINES, text_pdf
+
+    path = tmp_path / "rx.pdf"
+    path.write_bytes(text_pdf(RX_PDF_LINES))
+    pages = ingest_file(path, "eval_rx")
+    ex = extract("prescription", pages, mode="rules")
+    for _, f in iter_fields(ex):
+        f.confidence = 0.99
+        f.reasons = []
+        f.needs_confirmation = False
+    plain = ev.review_stats(ex, pages)
+    marked = ev.review_stats(ex, pages, marked_handwritten=True)
+    assert marked["fields"] == plain["fields"]
+    assert marked["flagged"] > plain["flagged"]
+    assert any(p.endswith(".name") for p in marked["paths"]) and any(p.endswith(".dosage") for p in marked["paths"])

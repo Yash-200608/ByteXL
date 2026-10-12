@@ -1,6 +1,7 @@
 import argparse
 import json
 import platform
+import shlex
 import statistics
 import subprocess
 import sys
@@ -24,6 +25,7 @@ from app.ingest.models import PageData
 from app.normalize import normalize_extraction
 from app.normalize.confirm import apply_confirmation_rules, iter_fields
 from app.pipeline import _is_handwritten
+from app.schemas import Prescription
 
 LANGUAGE_FIXTURE = ROOT / "tests" / "fixtures" / "language_eval.json"
 MOCK_MARKER = "mock-ollama"
@@ -82,10 +84,10 @@ def hardware_line(override: str | None) -> str:
     return f"{platform.system()} {platform.machine()}, {os.cpu_count()} logical CPUs, GPU not recorded"
 
 
-def review_stats(ex, pages: list[PageData]) -> dict:
+def review_stats(ex, pages: list[PageData], marked_handwritten: bool = False) -> dict:
     copy = ex.model_copy(deep=True)
     normalize_extraction(copy, sex=None)
-    queue = apply_confirmation_rules(copy, handwritten=_is_handwritten(copy, pages))
+    queue = apply_confirmation_rules(copy, handwritten=marked_handwritten or _is_handwritten(copy, pages))
     total = sum(1 for _, f in iter_fields(copy) if f.value is not None)
     return {"fields": total, "flagged": len(queue), "paths": [q["path"] for q in queue]}
 
@@ -115,6 +117,7 @@ def predict(sample: Path, cache_dir: Path, fresh: bool, mode: str | None) -> dic
         "attempts": ex.meta.attempts,
         "seconds": round(time.time() - start, 1),
         "review": review_stats(ex, pages),
+        "review_marked_handwritten": review_stats(ex, pages, True) if isinstance(ex, Prescription) else None,
         "prediction": to_flat(ex),
     }
     cache.write_text(json.dumps(out, indent=2, default=str), encoding="utf-8")
@@ -165,7 +168,7 @@ def build_report(ctx: dict) -> list[str]:
         "| | |",
         "|---|---|",
         f"| Generated | {ctx['when']} |",
-        f"| Commit | `{state['commit']}`{' (working tree had uncommitted changes)' if state['dirty'] else ''} on `{state['branch']}` |",
+        f"| Commit | `{state['commit']}`{' (working tree had uncommitted changes)' if state['dirty'] else ''}{'' if state['branch'] == 'HEAD' else ' on `' + state['branch'] + '`'} |",
         f"| Command | `{ctx['command']}` |",
         f"| Extraction mode | `{mode}` |",
         f"| Vision model | `{s.vision_model}`{ctx['model_note'](s.vision_model)} |",
@@ -201,7 +204,7 @@ def build_report(ctx: dict) -> list[str]:
         lines += ["", "### Per-field accuracy", "", "Fields are grouped by name across documents (list items collapse to their column).", ""]
         lines += field_table(overall)
 
-    reviewed = [(name, pred["review"]) for name, pred, *_ in rows if pred.get("review")]
+    reviewed = [(name, pred["review"], pred.get("review_marked_handwritten")) for name, pred, *_ in rows if pred.get("review")]
     lines += ["", "## Abstention / review queue", ""]
     if reviewed:
         lines += [
@@ -209,16 +212,22 @@ def build_report(ctx: dict) -> list[str]:
             "(low confidence, value not found in the page text, flag mismatch, unrecognised test or medicine, handwritten drug name or dose). "
             "Measured on the extraction before any user confirmation, with no patient profile (sex is unknown, so sex-specific ranges are not applied).",
             "",
-            "| Document | Extracted fields | Sent to confirm queue | Rate |",
-            "|---|---|---|---|",
+            "The handwriting rule (every drug name and dose is confirmed) fires on the LLM's `handwritten` flag or low OCR confidence. "
+            "A clean handwriting-style font is read as print and so is not detected (`docs/PROGRESS.md`, decision 26); the app's seed marks such a "
+            "document with the user switch. The last column shows the queue with that switch on, for prescriptions.",
+            "",
+            "| Document | Extracted fields | Sent to confirm queue | Rate | Queue with handwriting switch on |",
+            "|---|---|---|---|---|",
         ]
-        tf = tq = 0
-        for name, r in reviewed:
+        tf = tq = tqm = 0
+        for name, r, m in reviewed:
             tf += r["fields"]
             tq += r["flagged"]
-            lines.append(f"| {name} | {r['fields']} | {r['flagged']} | {pct(r['flagged'], r['fields'])} |")
-        lines.append(f"| **Overall** | **{tf}** | **{tq}** | **{pct(tq, tf)}** |")
-        lines.append(f"\nDocuments with at least one queued field: {sum(1 for _, r in reviewed if r['flagged'])} of {len(reviewed)}.")
+            tqm += (m or r)["flagged"]
+            marked = f"{m['flagged']} ({pct(m['flagged'], m['fields'])})" if m else "same"
+            lines.append(f"| {name} | {r['fields']} | {r['flagged']} | {pct(r['flagged'], r['fields'])} | {marked} |")
+        lines.append(f"| **Overall** | **{tf}** | **{tq}** | **{pct(tq, tf)}** | **{tqm} ({pct(tqm, tf)})** |")
+        lines.append(f"\nDocuments with at least one queued field: {sum(1 for _, r, _ in reviewed if r['flagged'])} of {len(reviewed)}.")
         missing = [name for name, pred, *_ in rows if not pred.get("review")]
         if missing:
             lines.append(f"\nNot recorded for {', '.join(missing)} (cached from a run that predates this metric; rerun with `--fresh`).")
@@ -336,7 +345,8 @@ def main(argv=None) -> int:
     reproduce_flags = f" --expected-dir {rel(expected_dir)}" if rel(expected_dir) != "samples/expected" else ""
     if args.mode:
         reproduce_flags += f" --mode {args.mode}"
-    command = "python scripts/eval.py" + "".join(f" {a}" for a in (argv if argv is not None else sys.argv[1:]))
+    pulls = " && ".join(f"ollama pull {m}" for m in dict.fromkeys(wanted))
+    command = shlex.join(["python", "scripts/eval.py", *(argv if argv is not None else sys.argv[1:])])
     ctx = {
         "rows": rows, "overall": overall, "skipped": skipped, "details": details,
         "state": repo_state(), "ollama": ollama, "settings": s, "mode": mode,
@@ -346,7 +356,7 @@ def main(argv=None) -> int:
         "hardware": hardware_line(args.hardware),
         "expected_label": rel(expected_dir), "samples_label": rel(Path(args.samples_dir)),
         "language": language_eval(),
-        "repro": f".venv/bin/python scripts/eval.py --fresh{reproduce_flags}",
+        "repro": f"{pulls}\n.venv/bin/python scripts/eval.py --fresh{reproduce_flags}",
     }
     Path(args.out).write_text("\n".join(build_report(ctx)) + "\n", encoding="utf-8")
     print(f"wrote {args.out}")
