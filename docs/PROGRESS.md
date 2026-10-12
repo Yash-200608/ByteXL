@@ -179,18 +179,28 @@ Resume point for any new session. Read `CLAUDE.md`, then this file, then `docs/a
 - FHIR models are `fhir.resources.R4B` (R4-wire-compatible) because pure-R4 classes need Pydantic v1 (decision 3).
 - Samples are synthetic (the repo had none); `samples/expected/` left empty for hand-filling; synthetic ground truth
   in `tests/fixtures/synthetic_truth/`.
+- Action plan PER-02 asked for the demo label `cloud demo / synthetic patient data / mock responses; not a live model
+  run`. It is used verbatim, but the hosted demo does not run the mock Ollama: it serves a snapshot captured through
+  it and uses the rule-based fallbacks for new uploads. The README and the banner say both (decision 40).
+- `make eval` now defaults to `tests/fixtures/synthetic_truth` (`EVAL_TRUTH`), because `samples/expected/` is still
+  empty and the default run used to skip every document.
 
 ## Known issues
 
 - On CPU-only hardware one document takes ~4–8 min end to end with the real models (vision prompt evaluation
   dominates). The UI shows per-stage progress; the seed script is the fastest way to prepare a demo.
 - Automatic handwriting detection is weak on neat handwriting; the user switch is the safety net.
+- It also misfires the other way: in the decision 40 eval runs, `qwen2.5vl:3b` flagged the *printed* prescription photo
+  as handwritten (its OCR confidence of 0.93 is above the 0.90 threshold, so the flag came from the model), which queues
+  all 10 drug-name and dose fields. This is the safe direction but adds friction.
 - PaddlePaddle 3.3.1 crashes with oneDNN enabled; `enable_mkldnn=False` is set in `app/ingest/ocr.py`.
 
 ## Next step
 
 All phases done. Remaining by hand:
-1. Fill `samples/expected/*.json` for any real documents you add to `samples/`, then `make eval`.
+0. Action plan PER-01: merge the reviewed state into `main`, make `main` the default branch on GitHub, point the
+   Streamlit Cloud app at `main`, and delete stale `claude/*` branches (decision 40).
+1. Fill `samples/expected/*.json` for any real documents you add to `samples/`, then `make eval EVAL_TRUTH=samples/expected`.
 2. Fill the hardware line in the master prompt; on a GPU set `VISION_MODEL=qwen2.5vl:7b` and rerun `make eval`.
 3. Optional: try `HINDI_SUMMARY_MODE=llm` on stronger hardware and review Hindi output before demoing it.
 
@@ -290,3 +300,32 @@ extraction, English LLM summaries), 209 tests passing (`.venv/bin/pytest -q`), r
     - **Verified:** a fresh clone with a new Python 3.12 environment, installed from `ui/requirements.txt` only.
       - The app started and seeded the demo patient.
       - The banner showed, and a chat question went through the in-process API.
+40. Release and reproducibility pass (action plan PER-01 to PER-03, "ByteXL (PERRY) action plan").
+    - **Demo boundary:** the README puts `cloud demo / synthetic patient data / mock responses; not a live model run`
+      next to the live link, followed by a four-mode table: cloud demo, mock Ollama, rules only, live models. The
+      cloud banner (`DEMO_NOTICE` in `ui/cloud_app.py` and the `Dockerfile`) opens with the same label.
+      - The demo snapshot's extraction timings (0.1–0.2 s in `deploy/demo_data/store/documents/`) show it was
+        captured through the mock Ollama, not a model run.
+    - **Eval report** (`scripts/eval.py` → `docs/eval_results.md`) now records:
+      - Provenance: commit (with a dirty-tree flag), command, Ollama version, model digests, hardware and Python.
+        If the mock Ollama answers, the report says so and a warning is printed.
+      - Dataset and split: synthetic data, no held-out split, in-sample.
+      - Per-field precision and recall (`Score.fields`, keyed by `field_key`).
+      - The confirm-queue (abstention) rate, also with the handwriting switch on, and the reasons fields were queued.
+      - Latency; language detection over `tests/fixtures/language_eval.json` (13 languages × 3); and a list of what is
+        not evaluated.
+    - **Live-model runs on this container** (4 vCPU Xeon, 15 GB RAM, no GPU, Ollama 0.12.6, `qwen2.5vl:3b`
+      `fb90415cde1e`, `qwen2.5:7b` `845dbda0ea48`): two full `--fresh` runs at `54e4f8a` and `0aa2660` gave identical
+      overall counts (220 correct / 229 predicted / 227 expected, F1 0.96), 261–361 s per document. At `0aa2660`, 15 of 266
+      extracted fields went to the confirm queue (6 %), and 25 with the handwriting switch on. A single-document rerun at
+      `19cc743` confirmed the reasons: the model flagged the printed photo as handwritten.
+    - **CI:** `.github/workflows/ci.yml` runs `pytest -m "not slow"` from `ui/requirements.txt` on Ubuntu 24.04 with
+      Python 3.11 and 3.12, plus an eval-report smoke run in rules mode. The PaddleOCR tests are a separate job that
+      runs only from a manual dispatch. New `make test-fast`, `make test-slow` and `make eval-fresh` targets.
+      - Verified here: 297 passed, 1 skipped on 3.11 and on 3.12 (slim install); 311 passed, 1 skipped with the
+        full `requirements.txt`. The workflow itself has not run yet.
+    - **Bug found by the clean install:** OpenCV 5 (`opencv-python-headless==5.0.0.93`, pinned in
+      `ui/requirements.txt`) reports `minAreaRect` angles about 90° away from 4.x, so `estimate_skew` returned 0 for a
+      -3° page. It now folds angles modulo 90° (`app/ingest/preprocess.py`), which works with either convention.
+    - **PER-01 (default branch) is not done:** the repository's default branch is a generated `claude/*` branch.
+      Merging to `main` and changing the default branch is a GitHub settings change for the owner.
